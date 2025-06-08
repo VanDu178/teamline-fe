@@ -5,7 +5,7 @@
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Ensure it takes full height on larger screens */
+  min-height: 100vh;
 }
 
 .title {
