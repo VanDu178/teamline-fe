@@ -1,0 +1,53 @@
+.flex-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+.flex-container > * {
+  flex-shrink: 0;
+}
+
+/* Mobile (below 768px) */
+@media (max-width: 767px) {
+  .flex-container {
+    flex-direction: column;
+    height: auto;
+  }
+  .flex-container > * {
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* Tablet (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .flex-container {
+    flex-direction: column;
+    height: auto;
+  }
+  .flex-container > * {
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* Desktop/Laptop (above 1024px, including 1535px) */
+@media (min-width: 1025px) {
+  .flex-container {
+    flex-direction: row;
+  }
+  /* Adjust widths based on original proportions */
+  .leftsidebar {
+    width: 60px;
+  }
+  .chatlist {
+    width: 300px;
+  }
+  .main {
+    flex: 1;
+  }
+  .right-sidebar {
+    width: 236px;
+  }
+}
