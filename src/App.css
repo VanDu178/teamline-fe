@@ -1,0 +1,56 @@
+  /* Light mode (default) */
+:root {
+  --background: #ffffff;
+  --card-background: #f7f7f7;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --input-background: #e5e7eb;
+  --button-background: #3b82f6;
+  --button-hover: #2563eb;
+  --link-color: #3b82f6;
+  --link-hover: #60a5fa;
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+  /* Dark mode */
+[data-theme="dark"] {
+  --background: #1a202c;
+  --card-background: rgba(47, 55, 72, 0.9);
+  --text-primary: #e2e8f0;
+  --text-secondary: #a0aec0;
+  --input-background: #4b5563;
+  --button-background: #3b82f6;
+  --button-hover: #2563eb;
+  --link-color: #60a5fa;
+  --link-hover: #93c5fd;
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Global styles using variables */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+h1 {
+  color: var(--text-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--link-hover);
+}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
