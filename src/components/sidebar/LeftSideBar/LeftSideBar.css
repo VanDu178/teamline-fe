@@ -1,0 +1,67 @@
+.leftsidebar {
+  width: 60px;
+  background-color: #1f2937;
+  color: #ffffff;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh; /* Ensure it takes full height on larger screens */
+}
+
+.avatar {
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  width: 50px;
+  height: 50px;
+  object-fit: cover; /* Ensure image fits */
+}
+
+/* Responsive adjustments */
+.icon {
+  margin-bottom: 1rem;
+  cursor: pointer;
+  font-size: 1.5rem;
+}
+
+.settings {
+  margin-top: auto;
+}
+
+/* Mobile (below 768px) */
+@media (max-width: 767px) {
+  .leftsidebar {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0.5rem;
+    min-height: auto;
+  }
+  .avatar {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 0;
+    margin-right: 0.5rem;
+  }
+  .icon {
+    font-size: 1rem;
+    margin: 0 0.25rem;
+  }
+  .settings {
+    margin-top: 0;
+  }
+}
+
+/* Tablet (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .leftsidebar {
+    width: 50px;
+  }
+  .avatar {
+    width: 40px;
+    height: 40px;
+  }
+  .icon {
+    font-size: 1.25rem;
+  }
+}
