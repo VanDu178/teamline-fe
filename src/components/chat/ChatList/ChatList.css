@@ -1,11 +1,12 @@
 .chatlist {
   width: 300px;
-  background-color: #374151;
-  color: #ffffff;
+  background-color: var(--background);
+  color: var(--text-primary);
   padding: 1rem;
   display: flex;
   flex-direction: column;
   min-height: 100vh; /* Ensure it takes full height on larger screens */
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .chatlist-search {
@@ -15,10 +16,11 @@
 .search-input {
   width: 100%;
   padding: 0.5rem;
-  background-color: #4b5563;
-  color: #ffffff;
+  background-color: var(--input-background);
+  color: var(--text-primary);
   border: none;
   border-radius: 0.25rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .chatlist-content {
@@ -26,7 +28,9 @@
   overflow-y: auto;
 }
 
-/* Mobile (below 768px) */
+
+
+/* Responsive adjustments */
 @media (max-width: 767px) {
   .chatlist {
     width: 100%;
@@ -39,7 +43,6 @@
   }
 }
 
-/* Tablet (768px - 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
   .chatlist {
     width: 250px;

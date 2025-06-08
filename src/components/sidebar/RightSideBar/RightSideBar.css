@@ -1,12 +1,13 @@
 .right-sidebar {
   width: 236px;
-  background-color: #2d3748;
-  color: #ffffff;
+  background-color: var(--background);
+  color: var(--text-primary);
   padding: 1rem;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  border-left: 1px solid #4b5563;
+  border-left: 1px solid var(--input-background);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .user-info {
@@ -34,7 +35,7 @@
 }
 
 .user-status {
-  color: #a0aec0;
+  color: var(--text-secondary);
   font-size: 0.75rem;
 }
 
@@ -49,15 +50,15 @@
 .tab {
   padding: 0.5rem;
   font-size: 0.875rem;
-  color: #a0aec0;
+  color: var(--text-secondary);
   cursor: pointer;
   border-radius: 0.25rem;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .tab.active {
-  background-color: #4a5568;
-  color: #ffffff;
+  background-color: var(--input-background);
+  color: var(--text-primary);
 }
 
 .sidebar-actions {
@@ -68,7 +69,7 @@
 
 .action-btn {
   padding: 0.5rem;
-  background-color: #3b82f6;
+  background-color: var(--button-background);
   color: #ffffff;
   border: none;
   border-radius: 0.25rem;
@@ -78,16 +79,17 @@
 }
 
 .action-btn:hover {
-  background-color: #2563eb;
+  background-color: var(--button-hover);
 }
 
-/* Mobile (below 768px) */
+
+/* Responsive adjustments */
 @media (max-width: 767px) {
   .right-sidebar {
     width: 100%;
     min-height: auto;
     border-left: none;
-    border-top: 1px solid #4b5563;
+    border-top: 1px solid var(--input-background);
   }
   .user-avatar {
     width: 30px;
@@ -109,7 +111,6 @@
   }
 }
 
-/* Tablet (768px - 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
   .right-sidebar {
     width: 200px;

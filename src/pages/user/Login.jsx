@@ -1,13 +1,11 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import "../../styles/login.css";
 
 const Login = () => {
-    const handleLogin = () => {
-
-    }
+    const handleLogin = () => { }
     return (
         <div className="login-page">
+
             <h1>Đăng nhập</h1>
             <form >
                 <input
@@ -35,5 +33,6 @@ const Login = () => {
         </div>
     );
 };
+
 
 export default Login;

@@ -1,9 +1,10 @@
 .chat-item {
   padding: 0.5rem 0;
-  border-bottom: 1px solid #4b5563;
+  border-bottom: 1px solid var(--input-background);
   display: flex;
   align-items: center;
   min-width: 0; /* Allow flex items to shrink */
+  transition: border-color 0.3s ease;
 }
 
 .chat-avatar {
@@ -28,10 +29,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%; /* Use 100% of available space, adjusted by parent */
+  color: var(--text-primary);
 }
 
 .chat-message {
-  color: #a0aec0;
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -39,9 +41,10 @@
 }
 
 .chat-time {
-  color: #9ca3af;
+  color: var(--text-secondary);
   font-size: 0.75rem;
   min-width: 60px;
   text-align: right;
   flex-shrink: 0; /* Prevent time from shrinking */
 }
+
