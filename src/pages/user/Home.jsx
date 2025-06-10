@@ -1,14 +1,30 @@
 import React from "react";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import "../../styles/home.css"
+import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
     const { isDarkMode, toggleTheme } = useTheme();
+    const { logout, isAuthenticated } = useAuth();
+    const { navigate } = useNavigate();
     return (
         <div className="main">
             <button onClick={toggleTheme} className="theme-toggle">
                 {isDarkMode === "dark" ? "Chuyển sang Light Mode" : "Chuyển sang Dark Mode"}
             </button>
+            {isAuthenticated ? (
+                <button onClick={logout}>
+                    Logout
+                </button>
+            ) : (
+                <button onClick={() => navigate('/login')}>
+                    Login
+                </button>
+            )}
+
+
+
             <h1 className="title">
                 Chào mừng đến với <span className="highlight">Zalo PC</span>!
             </h1>

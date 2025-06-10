@@ -1,13 +1,16 @@
-import { ThemeProvider } from "./context/ThemeContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import AppRoutes from "./routes";
 import "./App.css";
 
 function App() {
   return (
     <ThemeProvider>
-      <div className="App">
-        <AppRoutes />
-      </div>
+      <AuthProvider>
+        <div className="App">
+          <AppRoutes />
+        </div>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
