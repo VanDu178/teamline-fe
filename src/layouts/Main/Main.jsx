@@ -11,16 +11,26 @@ const Main = () => {
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
+
     useEffect(() => {
         if (!isAuthenticated) {
-            navigate('/login', { replace: true }); // Thêm replace để không cho phép quay lại
+            alert("Phien dang nhap da het han")
+            navigate('/login', { replace: true });
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated]);
 
-    if (!isAuthenticated) {
-        return null; // Tránh render nội dung khi chưa được xác thực
-    }
 
+    // useEffect(() => {
+    //     if (!isCheckingLogin && !isAuthenticated) {
+    //         console.log("Chuyển hướng về login do chưa xác thực");
+    //         navigate('/login', { replace: true });
+    //     }
+    // }, [isAuthenticated, isCheckingLogin, navigate]);
+
+
+    // if (isCheckingLogin) {
+    //     return <div>Loading...</div>; // Hoặc spinner đẹp hơn
+    // }
     return (
         <div className="flex-container">
             <LeftSidebar />
