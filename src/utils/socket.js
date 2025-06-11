@@ -41,28 +41,23 @@ export const connectSocket = () => {
 export const registerSocketEvents = (socket) => {
     if (!socket || !chatStore) return;
 
-    const { setUserId, setUsername, setMessages } = chatStore;
+    const { setUserId, setUsername, setMessages, setActiveChatUserId, activeChatUserIdRef } = chatStore;
 
-    // socket.on('connect_error', (error) => {
-    //     console.error('Connection error:', error);
-    // });
+    socket.on('private-message', ({ fromUserId, message, sentAt }) => {
+        const activeChatUserId = activeChatUserIdRef?.current;
 
-    // socket.on('registered', ({ userId, username }) => {
-    //     console.log(`Đăng ký thành công: userId=${userId}, username=${username}`);
-    //     setUserId(userId);
-    //     setUsername(username);
-    // });
-
-    socket.on('private-message', ({ fromUserId, fromUsername, message, messageId, sentAt }) => {
-        setMessages((prev) => [
-            ...prev,
-            {
-                fromUserId,
-                fromUsername: fromUsername || 'Người dùng ẩn danh',
-                text: message,
-                time: new Date(sentAt).toLocaleTimeString(),
-            },
-        ]);
+        alert(`Tin nhắn mới từ ${fromUserId}: ${message}`);
+        alert(`ng đang chat: ${activeChatUserId}`);
+        if (fromUserId === activeChatUserId) {
+            setMessages((prev) => [
+                ...prev,
+                {
+                    fromUserId,
+                    text: message,
+                    time: new Date(sentAt).toLocaleTimeString(),
+                },
+            ]);
+        }
     });
 
     socket.on('message-sent', (data) => {

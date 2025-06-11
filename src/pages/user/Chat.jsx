@@ -6,14 +6,18 @@ import { useAuth } from "../../contexts/AuthContext";
 import '../../styles/chat.css';
 
 const Chat = () => {
-    const { userId, setUserId, username, setUsername, messages, setMessages } = useChat();
+    const { userId, setUserId, username, setUsername, messages, setMessages, activeChatUserId, setActiveChatUserId, activeChatUserIdRef } = useChat();
     const [message, setMessage] = useState('');
     const [toUserId, setToUserId] = useState('');
     const { isAuthenticated } = useAuth();
 
     useEffect(() => {
+        //lôi đống này ra ngoài vì luôn connect socket khi vào app
+        // *********************************************
+        setActiveChatUserId('6847b118948be903e901fa22'); // Thiết lập ID người dùng chat mặc định
+        // *********************************************
         const newSocket = connectSocket();
-        setChatStore({ setMessages, setUserId, setUsername }); // Truyền store context vào socketEvents nếu cần dùng chung
+        setChatStore({ setMessages, setUserId, setUsername, setActiveChatUserId, activeChatUserIdRef }); // Truyền store context vào socketEvents nếu cần dùng chung
 
         registerSocketEvents(newSocket); // Đăng ký sự kiện socket
 
@@ -21,7 +25,7 @@ const Chat = () => {
         return () => {
             disconnectSocket();
         };
-    }, [setMessages, setUserId, setUsername]);
+    }, [setMessages, setUserId, setUsername, setActiveChatUserId]);
 
     const handleSendMessage = () => {
         if (message && toUserId) {
