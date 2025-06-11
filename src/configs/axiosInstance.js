@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Tạo đối tượng axios
 const axiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL,
+  baseURL: process.env.REACT_APP_BACKEND_URL_API,
   withCredentials: true,
 });
 //Không cần gắng accesstoken trước mỗi request, cái này auto làm, vì accesstoken và refreshtoken được đặt trong http only
@@ -12,6 +12,7 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     console.log("Intercept error", error.response?.status, originalRequest.url);
+    console.log("error", error);
 
     if (
       error.response?.status === 401 &&
