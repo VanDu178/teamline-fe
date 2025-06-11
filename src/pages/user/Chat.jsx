@@ -2,18 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { connectSocket, disconnectSocket, registerSocketEvents, setChatStore } from '../../utils/socket';
 import { emitSocketEvent } from '../../configs/socketEmitter';
 import { useChat } from '../../contexts/ChatContext';
+import { useAuth } from "../../contexts/AuthContext";
 import '../../styles/chat.css';
 
 const ChatComponent = () => {
     const { userId, setUserId, username, setUsername, messages, setMessages } = useChat();
     const [message, setMessage] = useState('');
     const [toUserId, setToUserId] = useState('');
+    const { isAuthenticated } = useAuth();
 
     useEffect(() => {
-        const newSocket = connectSocket();
-        setChatStore({ setMessages, setUserId, setUsername }); // Truyền store context vào socketEvents nếu cần dùng chung
+        if (!isAuthenticated) {
+            const newSocket = connectSocket();
+            setChatStore({ setMessages, setUserId, setUsername }); // Truyền store context vào socketEvents nếu cần dùng chung
 
-        registerSocketEvents(newSocket); // Đăng ký sự kiện socket
+            registerSocketEvents(newSocket); // Đăng ký sự kiện socket
+        }
 
         // Ngắt kết nối khi rời khỏi component
         return () => {
