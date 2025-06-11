@@ -1,76 +1,29 @@
-// ChatComponent.js
 import React, { useState, useEffect } from 'react';
-import { connectSocket, disconnectSocket, getSocket } from '../../utils/socket';
+import { connectSocket, disconnectSocket, registerSocketEvents, setChatStore } from '../../utils/socket';
+import { emitSocketEvent } from '../../configs/socketEmitter';
+import { useChat } from '../../contexts/ChatContext';
 import '../../styles/chat.css';
 
 const ChatComponent = () => {
-    const [socket, setSocket] = useState(null);
-    const [userId, setUserId] = useState('');
-    const [username, setUsername] = useState('');
+    const { userId, setUserId, username, setUsername, messages, setMessages } = useChat();
     const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState([]);
     const [toUserId, setToUserId] = useState('');
-    const [show, setShow] = useState(true);
 
     useEffect(() => {
+        const newSocket = connectSocket();
+        setChatStore({ setMessages, setUserId, setUsername }); // Truyền store context vào socketEvents nếu cần dùng chung
+
+        registerSocketEvents(newSocket); // Đăng ký sự kiện socket
+
         // Ngắt kết nối khi rời khỏi component
         return () => {
             disconnectSocket();
         };
-    }, []);
-
-    const handleRegister = () => {
-        console.log('Đăng ký với userId:', userId);
-        if (userId) {
-            const newSocket = connectSocket(userId);
-
-            setSocket(newSocket);
-
-            newSocket.on('connect', () => {
-                console.log('Connected to server:', newSocket.id);
-            });
-
-            newSocket.on('connect_error', (error) => {
-                console.error('Connection error:', error);
-            });
-
-            newSocket.on('registered', ({ userId, username }) => {
-                console.log(`Đăng ký thành công: userId=${userId}, username=${username}`);
-                setUserId(userId);
-                setUsername(username);
-            });
-
-            newSocket.on('private-message', ({ fromUserId, fromUsername, message, messageId, sentAt }) => {
-                setMessages((prev) => [
-                    ...prev,
-                    {
-                        fromUserId,
-                        fromUsername: fromUsername || 'Người dùng ẩn danh',
-                        text: message,
-                        time: new Date(sentAt).toLocaleTimeString(),
-                    },
-                ]);
-            });
-
-            newSocket.on('message-sent', (data) => {
-                console.log('Message sent confirmation:', data);
-            });
-
-            newSocket.on('error', ({ message }) => {
-                console.error('Server error:', message);
-                alert(`Lỗi: ${message}`);
-            });
-
-            setShow(false);
-        } else {
-            alert('Vui lòng nhập userId');
-        }
-    };
+    }, [setMessages, setUserId, setUsername]);
 
     const handleSendMessage = () => {
-        const currentSocket = getSocket();
-        if (currentSocket && message && toUserId) {
-            currentSocket.emit('private-message', { toUserId, message });
+        if (message && toUserId) {
+            emitSocketEvent('private-message', { toUserId, message });
             setMessages((prev) => [
                 ...prev,
                 {
@@ -105,34 +58,21 @@ const ChatComponent = () => {
                 ))}
             </div>
             <div className="chat-input">
-                {show && (
-                    <div>
-                        <input
-                            type="text"
-                            value={userId}
-                            onChange={(e) => setUserId(e.target.value)}
-                            placeholder="Nhập userId (ObjectId)"
-                        />
-                        <button onClick={handleRegister}>Đăng ký</button>
-                    </div>
-                )}
-                {userId && !show && (
-                    <>
-                        <input
-                            type="text"
-                            value={toUserId}
-                            onChange={(e) => setToUserId(e.target.value)}
-                            placeholder="Nhập ID người nhận (ObjectId)"
-                        />
-                        <input
-                            type="text"
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Nhập tin nhắn"
-                        />
-                        <button onClick={handleSendMessage}>Gửi</button>
-                    </>
-                )}
+                <>
+                    <input
+                        type="text"
+                        value={toUserId}
+                        onChange={(e) => setToUserId(e.target.value)}
+                        placeholder="Nhập ID người nhận (ObjectId)"
+                    />
+                    <input
+                        type="text"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Nhập tin nhắn"
+                    />
+                    <button onClick={handleSendMessage}>Gửi</button>
+                </>
             </div>
         </div>
     );
