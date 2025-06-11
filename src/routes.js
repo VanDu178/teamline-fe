@@ -21,6 +21,10 @@ const AppRoutes = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/resend-link" element={<ResendLinkActive />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/*" element={<Main />}>
+          <Route index element={<Chat />} />
+          <Route index element={<Home />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

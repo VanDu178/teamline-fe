@@ -5,26 +5,27 @@ import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from "../../contexts/AuthContext";
 import '../../styles/chat.css';
 
-const ChatComponent = () => {
-    const { userId, setUserId, username, setUsername, messages, setMessages } = useChat();
+const Chat = () => {
+    const { userId, setUserId, username, setUsername, messages, setMessages, activeChatUserId, setActiveChatUserId, activeChatUserIdRef } = useChat();
     const [message, setMessage] = useState('');
     const [toUserId, setToUserId] = useState('');
     const { isAuthenticated } = useAuth();
 
     useEffect(() => {
-        console.log("vao chat", isAuthenticated);
-        if (isAuthenticated) {
-            const newSocket = connectSocket();
-            setChatStore({ setMessages, setUserId, setUsername }); // Truyền store context vào socketEvents nếu cần dùng chung
+        //lôi đống này ra ngoài vì luôn connect socket khi vào app
+        // *********************************************
+        setActiveChatUserId('6847b118948be903e901fa22'); // Thiết lập ID người dùng chat mặc định
+        // *********************************************
+        const newSocket = connectSocket();
+        setChatStore({ setMessages, setUserId, setUsername, setActiveChatUserId, activeChatUserIdRef }); // Truyền store context vào socketEvents nếu cần dùng chung
 
-            registerSocketEvents(newSocket); // Đăng ký sự kiện socket
-        }
+        registerSocketEvents(newSocket); // Đăng ký sự kiện socket
 
         // Ngắt kết nối khi rời khỏi component
         return () => {
             disconnectSocket();
         };
-    }, [setMessages, setUserId, setUsername]);
+    }, [setMessages, setUserId, setUsername, setActiveChatUserId]);
 
     const handleSendMessage = () => {
         if (message && toUserId) {
@@ -47,40 +48,92 @@ const ChatComponent = () => {
     return (
         <div className="chat-container">
             <div className="chat-header">
-                <h3>Chat App</h3>
+                <div className="header-left">
+                    <div className="avatar">
+                        <img src="https://via.placeholder.com/40" alt="avatar" />
+                    </div>
+                    <div className="header-info">
+                        <h3>Chat-app-team</h3>
+                        <p>2 thành viên đang hoạt động</p>
+                    </div>
+                </div>
+                <div className="header-actions">
+                    <button className="header-btn">
+                        <i className="fas fa-search"></i>
+                    </button>
+                    <button className="header-btn">
+                        <i className="fas fa-ellipsis-v"></i>
+                    </button>
+                </div>
             </div>
+
             <div className="chat-messages">
+                <div className="date-divider">
+                    <span>Hôm nay</span>
+                </div>
+
                 {messages.map((msg, index) => (
                     <div
                         key={index}
-                        className={`message ${msg.fromUserId === userId ? 'sent' : 'received'}`}
+                        className={`message-container ${msg.fromUserId === userId ? 'sent' : 'received'}`}
                     >
-                        <p>
-                            {msg.text} <span className="time">({msg.time})</span>
-                        </p>
-                        <span className="username">{msg.fromUsername}</span>
+                        <div className="message-content">
+                            <div className="message-text">{msg.text}</div>
+                            <div className="message-time">
+                                {msg.time}
+                                {msg.fromUserId === userId && (
+                                    <span className="status-icon">
+                                        <i className="fas fa-check-double"></i>
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 ))}
+                <div
+                // ref={messagesEndRef} 
+                />
             </div>
-            <div className="chat-input">
-                <>
+
+            <div className="chat-input-container">
+                <div className="input-tools">
+                    <button className="tool-btn">
+                        <i className="fas fa-plus-circle"></i>
+                    </button>
+                    <button className="tool-btn">
+                        <i className="far fa-smile"></i>
+                    </button>
+                    <button className="tool-btn">
+                        <i className="fas fa-paperclip"></i>
+                    </button>
+                </div>
+                <div className="input-message-wrapper">
                     <input
                         type="text"
                         value={toUserId}
                         onChange={(e) => setToUserId(e.target.value)}
-                        placeholder="Nhập ID người nhận (ObjectId)"
+                        placeholder="Nhập ID người nhận..."
+                        className="input-to-user"
                     />
                     <input
                         type="text"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Nhập tin nhắn"
+                        // onKeyPress={handleKeyPress}
+                        placeholder="Nhập tin nhắn..."
+                        className="input-message"
                     />
-                    <button onClick={handleSendMessage}>Gửi</button>
-                </>
+                </div>
+                <button
+                    onClick={handleSendMessage}
+                    className="send-button"
+                    disabled={!message}
+                >
+                    <i className="fas fa-paper-plane"></i>
+                </button>
             </div>
         </div>
     );
 };
 
-export default ChatComponent;
+export default Chat;
