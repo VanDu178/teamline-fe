@@ -18,8 +18,8 @@ const AppRoutes = () => {
         <Route path="/resend-link" element={<ResendLinkActive />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/*" element={<Main />}>
-          <Route path="chat" element={<Chat />} />
-          <Route index element={<Home />} />
+          <Route index element={<Chat />} />
+          {/* <Route index element={<Home />} /> */}
         </Route>
       </Routes>
     </BrowserRouter>
