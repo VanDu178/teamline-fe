@@ -7,8 +7,9 @@ import { useNavigate } from "react-router-dom";
 const Home = () => {
     const { isDarkMode, toggleTheme } = useTheme();
     const { logout, isAuthenticated } = useAuth();
-    const { navigate } = useNavigate();
+    const navigate = useNavigate();
     return (
+
         <div className="main">
             <button onClick={toggleTheme} className="theme-toggle">
                 {isDarkMode === "dark" ? "Chuyển sang Light Mode" : "Chuyển sang Dark Mode"}
