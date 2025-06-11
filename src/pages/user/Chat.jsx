@@ -12,7 +12,8 @@ const ChatComponent = () => {
     const { isAuthenticated } = useAuth();
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        console.log("vao chat", isAuthenticated);
+        if (isAuthenticated) {
             const newSocket = connectSocket();
             setChatStore({ setMessages, setUserId, setUsername }); // Truyền store context vào socketEvents nếu cần dùng chung
 

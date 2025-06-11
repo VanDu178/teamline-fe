@@ -1,4 +1,5 @@
 import axios from "axios";
+import Cookies from "js-cookie";
 
 // Tạo đối tượng axios
 const axiosInstance = axios.create({
@@ -22,11 +23,15 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       try {
         console.log("Calling refresh token");
-        await axiosInstance.post("/auth/refresh-token", null, {
+        const res = await axiosInstance.post("/auth/refresh-token", null, {
           withCredentials: true,
         });
-        console.log("Refresh token success, retry original request");
-        return axiosInstance(originalRequest);
+        if (res.status === 200) {
+          Cookies.remove("isLoggedIn");
+          Cookies.set("isLoggedIn", "isAuthenticated", { expires: 7 });
+          console.log("Refresh token success, retry original request");
+          return axiosInstance(originalRequest);
+        }
       } catch (refreshError) {
         console.log("Refresh token failed, redirect to login");
         // window.location.href = "/login";
