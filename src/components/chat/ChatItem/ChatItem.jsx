@@ -4,13 +4,14 @@ import { useChat } from '../../../contexts/ChatContext';
 import { emitSocketEvent } from '../../../configs/socketEmitter';
 
 const ChatItem = ({ name, time, message, avatar, chatId }) => {
-  const { roomId, setRoomId } = useChat();
+  const { roomId, setRoomId, setMessages } = useChat();
   const handleClick = () => {
     if (roomId === chatId) {
       return;
     }
     if (roomId) {
       emitSocketEvent('leave-room', { roomId });
+      setMessages([]);
     }
 
     setRoomId(chatId);

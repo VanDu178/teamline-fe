@@ -11,18 +11,19 @@ const ChatBox = () => {
     const [message, setMessage] = useState('');
     const { userId } = useAuth();
 
-    // useEffect(() => {
-    //     const fetchMessages = async () => {
-    //         const page = 1; // Giả sử bạn muốn lấy trang đầu tiên
-    //         const res = await axiosInstance.get(`/messages/${roomIdRef?.current}/${page}`);
-    //         console.log('res', res.data);
-    //         if (res.status === 200) {
-    //             setMessages(res.data.messages);
-    //         }
-    //     };
+    useEffect(() => {
+        const fetchMessages = async () => {
+            const page = 1; // Giả sử bạn muốn lấy trang đầu tiên
+            const res = await axiosInstance.get(`/messages/${roomIdRef?.current}/${page}`);
+            console.log('res', res.data);
+            console.log("userId", userId);
+            if (res.status === 200) {
+                setMessages(res.data.messages);
+            }
+        };
 
-    //     fetchMessages();
-    // }, []);
+        fetchMessages();
+    }, [roomId]);
 
     const handleAddReaction = async (messageId) => {
         try {
