@@ -1,10 +1,15 @@
 .chat-item {
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--input-background);
+  border-radius: 2px;
   display: flex;
   align-items: center;
-  min-width: 0; /* Allow flex items to shrink */
+  min-width: 0; 
   transition: border-color 0.3s ease;
+}
+
+.chat-item:hover{
+  background-color:var(--background-hover);
 }
 
 .chat-avatar {
