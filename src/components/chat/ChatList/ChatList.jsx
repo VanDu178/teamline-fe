@@ -12,7 +12,6 @@ const ChatList = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        console.log("call ")
         fetchChats(page);
     }, [page]);
 
@@ -41,6 +40,7 @@ const ChatList = () => {
     const fetchChats = async (pageNumber) => {
         try {
             const response = await axiosInstance.get(`/chats?page=${pageNumber}&limit=10`);
+            console.log("Fetched chats:", response.data);
             const newChats = response.data?.chatsWithLastMessage || [];
             const total = response.data?.total || 0;
 
@@ -76,6 +76,7 @@ const ChatList = () => {
                             time={chat.lastMessage?.createdAt}
                             message={chat.lastMessage?.text}
                             avatar={chat.members?.[0]?.avatar}
+                            chatId={chat._id}
                         />
                     ))}
                     {isLoading && <div className="loading-state">Đang tải thêm...</div>}

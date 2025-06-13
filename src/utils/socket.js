@@ -1,15 +1,19 @@
 import { io } from "socket.io-client";
 import { handleTokenExpired } from "../configs/socketEmitter";
-// import { useChat } from '../contexts/ChatContext';
+import Cookies from "js-cookie";
 
 let socket = null;
 let chatStore = null; // Biến toàn cục để lưu context
 
 export const setChatStore = (store) => {
   chatStore = store;
+  if (socket) {
+    registerSocketEvents(socket);
+  }
 };
 
 export const connectSocket = () => {
+  const userId = Cookies.get("userID");
   if (!socket) {
     socket = io(process.env.REACT_APP_BACKEND_URL, {
       withCredentials: true,
@@ -18,7 +22,8 @@ export const connectSocket = () => {
 
     socket.on("connect", () => {
       console.log("Socket connected:", socket.id);
-      socket.emit("register"); // Gửi sự kiện đăng ký khi kết nối
+      //join room tổng khi đăng nhập thành công
+      socket.emit('join-user', {});
     });
 
     socket.on("connect_error", (error) => {
@@ -42,18 +47,17 @@ export const registerSocketEvents = (socket) => {
   if (!socket || !chatStore) return;
 
   const {
-    setUserId,
-    setUsername,
     setMessages,
-    setActiveChatUserId,
-    activeChatUserIdRef,
+    roomIdRef,
   } = chatStore;
 
-  socket.on('private-message', (msg) => {
-    const activeChatUserId = activeChatUserIdRef?.current;
+  // sự kiện nhân tin nhắn
+  socket.on('received-message', (msg) => {
+    console.log("nhận tin nhắn", msg);
+    const roomId = roomIdRef?.current;
 
-    //kiểm tra xem tin nhắn có phải từ người dùng đang chat hay không
-    if (msg.sender === activeChatUserId || msg.sender._id === activeChatUserId) {
+    // kiểm tra xem tin nhắn có phải được gửi từ nhóm chat đang mở không
+    if (msg.chat === roomId) {
       setMessages((prev) => [...prev, msg]);
     }
   });

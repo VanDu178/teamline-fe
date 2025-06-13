@@ -1,46 +1,28 @@
 import React, { useState, useEffect, use } from 'react';
-import { connectSocket, disconnectSocket, registerSocketEvents, setChatStore } from '../../utils/socket';
+import { setChatStore } from '../../utils/socket';
 import { emitSocketEvent } from '../../configs/socketEmitter';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from "../../contexts/AuthContext";
-import '../../styles/chat.css';
+import './ChatBox.css';
 import axiosInstance from '../../configs/axiosInstance';
 
-const Chat = () => {
-    const { userId, setUserId, username, setUsername, messages, setMessages, activeChatUserId, setActiveChatUserId, activeChatUserIdRef } = useChat();
+const ChatBox = () => {
+    const { messages, setMessages, roomId, roomIdRef, toUserId, setToUserId } = useChat();
     const [message, setMessage] = useState('');
-    const [toUserId, setToUserId] = useState('');
-    const { isAuthenticated } = useAuth();
+    const { userId } = useAuth();
 
-    useEffect(() => {
-        //lôi đống này ra ngoài vì luôn connect socket khi vào app
-        // *********************************************
-        setActiveChatUserId('684b06cb192792007c6a2913'); // Thiết lập ID người dùng chat mặc định
-        // *********************************************
-        setUserId('6847b2e86b7a7c0a3d049990'); // Thiết lập ID người dùng mặc định
-        const newSocket = connectSocket();
-        setChatStore({ setMessages, setUserId, setUsername, setActiveChatUserId, activeChatUserIdRef }); // Truyền store context vào socketEvents nếu cần dùng chung
+    // useEffect(() => {
+    //     const fetchMessages = async () => {
+    //         const page = 1; // Giả sử bạn muốn lấy trang đầu tiên
+    //         const res = await axiosInstance.get(`/messages/${roomIdRef?.current}/${page}`);
+    //         console.log('res', res.data);
+    //         if (res.status === 200) {
+    //             setMessages(res.data.messages);
+    //         }
+    //     };
 
-        registerSocketEvents(newSocket); // Đăng ký sự kiện socket
-
-        // Ngắt kết nối khi rời khỏi component
-        return () => {
-            disconnectSocket();
-        };
-    }, [setMessages, setUserId, setUsername, setActiveChatUserId]);
-
-    useEffect(() => {
-        const fetchMessages = async () => {
-            const page = 1; // Giả sử bạn muốn lấy trang đầu tiên
-            const res = await axiosInstance.get(`/messages/${activeChatUserIdRef?.current}/${page}`);
-            console.log('res', res.data);
-            if (res.status === 200) {
-                setMessages(res.data.messages);
-            }
-        };
-
-        fetchMessages();
-    }, []);
+    //     fetchMessages();
+    // }, []);
 
     const handleAddReaction = async (messageId) => {
         try {
@@ -79,8 +61,8 @@ const Chat = () => {
     };
 
     const handleSendMessage = () => {
-        if (message && toUserId) {
-            emitSocketEvent('private-message', { toUserId, message });
+        if (message && roomId) {
+            emitSocketEvent('send-message', { roomId, message, toUserId });
             setMessages((prev) => [
                 ...prev,
                 {
@@ -92,8 +74,8 @@ const Chat = () => {
                     fileUrl: null,
                     replyTo: null,
                     reactions: [],
-                    seenBy: [], // Người gửi đã xem
-                    chat: "temp-chat-id", // ID phòng chat tạm
+                    seenBy: [],
+                    chat: roomId,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 },
@@ -208,13 +190,6 @@ const Chat = () => {
                     </button>
                 </div>
                 <div className="input-message-wrapper">
-                    <input
-                        type="text"
-                        value={toUserId}
-                        onChange={(e) => setToUserId(e.target.value)}
-                        placeholder="Nhập ID người nhận..."
-                        className="input-to-user"
-                    />
                     <textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
@@ -235,4 +210,4 @@ const Chat = () => {
     );
 };
 
-export default Chat;
+export default ChatBox;

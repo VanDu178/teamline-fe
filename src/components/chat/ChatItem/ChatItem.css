@@ -6,6 +6,7 @@
   align-items: center;
   min-width: 0; 
   transition: border-color 0.3s ease;
+  cursor: pointer;
 }
 
 .chat-item:hover{

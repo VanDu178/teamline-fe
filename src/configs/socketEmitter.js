@@ -45,7 +45,7 @@ export const handleTokenExpired = async () => {
       const newSocket = connectSocket();
 
       // Gửi lại sự kiện cũ sau khi đăng ký xong
-      newSocket.on("registered", () => {
+      newSocket.on("user-joined", () => {
         if (pendingEvent) {
           console.log("Resending last event:", pendingEvent.event);
           newSocket.emit(pendingEvent.event, pendingEvent.data);
