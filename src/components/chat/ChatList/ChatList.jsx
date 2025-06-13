@@ -64,7 +64,10 @@ const ChatList = () => {
             {isLoading && chats.length === 0 ? (
                 <div className="loading-state">Đang tải...</div>
             ) : error ? (
-                <div className="error-state">Có lỗi xảy ra, vui lòng thử lại!</div>
+                <div className="error-state">
+                    Có lỗi xảy ra, vui lòng thử lại!
+                    <button onClick={fetchChats(page)}>Tải lại</button>
+                </div>
             ) : chats.length === 0 ? (
                 <div className="empty-state">Bạn chưa có cuộc hội thoại nào</div>
             ) : (

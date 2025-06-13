@@ -8,25 +8,25 @@ import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   return (
-    <ThemeProvider>
-      <ChatProvider>
-        <div className="App">
-          <AuthProvider>
+    <ChatProvider>
+      <div className="App">
+        <AuthProvider>
+          <ThemeProvider>
             <AppRoutes />
-          </AuthProvider>
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            pauseOnHover
-            draggable
-            theme="light"
-          />
-        </div>
-      </ChatProvider>
-    </ThemeProvider>
+          </ThemeProvider>
+        </AuthProvider>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="light"
+        />
+      </div>
+    </ChatProvider>
   );
 }
 
