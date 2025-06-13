@@ -6,14 +6,12 @@ import Register from "./pages/user/Register";
 import ForgotPassword from "./pages/user/ForgotPassword";
 import ResendLinkActive from "./pages/user/ResendLinkActive";
 import VerifyEmail from "./pages/user/VerifyEmail";
-import Chat from "./pages/user/Chat";
 
 const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Main />}>
-          <Route path="chat" element={<Chat />} />
           <Route index element={<Home />} />
         </Route>
         <Route path="/login" element={<Login />} />
@@ -22,7 +20,6 @@ const AppRoutes = () => {
         <Route path="/resend-link" element={<ResendLinkActive />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/*" element={<Main />}>
-          <Route index element={<Chat />} />
           <Route index element={<Home />} />
         </Route>
       </Routes>

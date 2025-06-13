@@ -55,9 +55,9 @@
 }
 
 .chatlist-content {
-  height: 50px !important; /* Chiều cao cố định để test */
-  flex: none !important; /* Vô hiệu hóa flex để chiều cao cố định */
-  /* flex: 1;  */
+  /* height: 50px !important; 
+  flex: none !important;  */
+  flex: 1; 
   overflow-y: auto; /* Cuộn khi cần */
   width: 100%; /* Đảm bảo khớp với chiều rộng */
   scrollbar-width: thin; /* Ẩn scrollbar trên Firefox */
