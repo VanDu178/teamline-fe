@@ -4,15 +4,14 @@ const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
     const [messages, setMessages] = useState([]);
-    const [userId, setUserId] = useState('');
-    const [username, setUsername] = useState('');
-    const [activeChatUserId, _setActiveChatUserId] = useState('');
-    const activeChatUserIdRef = useRef('');
+    const [roomId, _setRoomId] = useState('');
+    const [toUserId, setToUserId] = useState('');
+    const roomIdRef = useRef('');
 
     // Hàm set đồng bộ cả state và ref
-    const setActiveChatUserId = (id) => {
-        _setActiveChatUserId(id);
-        activeChatUserIdRef.current = id; // Cập nhật giá trị hiện tại
+    const setRoomId = (id) => {
+        _setRoomId(id);
+        roomIdRef.current = id; // Cập nhật giá trị hiện tại
     };
 
     return (
@@ -20,13 +19,11 @@ export const ChatProvider = ({ children }) => {
             value={{
                 messages,
                 setMessages,
-                userId,
-                setUserId,
-                username,
-                setUsername,
-                activeChatUserId,
-                setActiveChatUserId,
-                activeChatUserIdRef, // Truyền ref ra ngoài
+                roomId,
+                setRoomId,
+                roomIdRef,
+                toUserId,
+                setToUserId,
             }}
         >
             {children}

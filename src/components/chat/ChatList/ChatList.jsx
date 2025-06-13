@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import ChatItem from "../ChatItem/ChatItem";
+import UserItem from "../UserItem/UserItem"
 import axiosInstance from "../../../configs/axiosInstance";
 import "./ChatList.css";
 
@@ -10,10 +11,13 @@ const ChatList = () => {
     const [hasMore, setHasMore] = useState(true);
     const listRef = useRef(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
-        console.log("call ")
-        fetchChats(page);
+        if (!isSearching) {
+            fetchChats(page);
+        }
     }, [page]);
 
     useEffect(() => {
@@ -41,6 +45,7 @@ const ChatList = () => {
     const fetchChats = async (pageNumber) => {
         try {
             const response = await axiosInstance.get(`/chats?page=${pageNumber}&limit=10`);
+            console.log("Fetched chats:", response.data);
             const newChats = response.data?.chatsWithLastMessage || [];
             const total = response.data?.total || 0;
 
@@ -54,10 +59,54 @@ const ChatList = () => {
         }
     };
 
+
+    const searchChats = async () => {
+        if (!searchTerm.trim()) return;
+        setIsSearching(true);
+        setIsLoading(true);
+        try {
+            const response = await axiosInstance.get(`/users/${searchTerm}`);
+            const user = response.data?.user;
+            console.log("thong tin user", user);
+            setChats(user ? [user] : []);
+            setHasMore(false);
+        } catch (err) {
+            console.error("Error searching chats:", err);
+            setError(true);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSearchKeyDown = (e) => {
+        if (e.key === "Enter") {
+            setPage(1); // Reset page
+            searchChats();
+        }
+    };
+
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+        if (!value) {
+            // If input is cleared, go back to normal chat list
+            setIsSearching(false);
+            setChats([]);
+            setPage(1);
+        }
+    };
+
+
     return (
         <div className="chatlist">
             <div className="chatlist-search">
-                <input placeholder="Tìm kiếm..." className="search-input" />
+                <input
+                    placeholder="Tìm kiếm..."
+                    className="search-input"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onKeyDown={handleSearchKeyDown}
+                />
 
             </div>
 
@@ -72,15 +121,24 @@ const ChatList = () => {
                 <div className="empty-state">Bạn chưa có cuộc hội thoại nào</div>
             ) : (
                 <div className="chatlist-content" ref={listRef}>
-                    {chats.map((chat, idx) => (
-                        <ChatItem
-                            key={idx}
-                            name={chat.name}
-                            time={chat.lastMessage?.createdAt}
-                            message={chat.lastMessage?.text}
-                            avatar={chat.members?.[0]?.avatar}
-                        />
-                    ))}
+                    {chats.map((item, idx) =>
+                        isSearching ? (
+                            <UserItem
+                                key={idx}
+                                name={item.username}
+                                avatar={item.avatar || ""}
+                            />
+                        ) : (
+                            <ChatItem
+                                key={idx}
+                                name={item.name}
+                                email={item.email}
+                                avatar={item.avatar}
+                                userId={item._id}
+                            />
+
+                        )
+                    )}
                     {isLoading && <div className="loading-state">Đang tải thêm...</div>}
                     {!hasMore && <div className="end-state">Hết cuộc hội thoại</div>}
                 </div>
