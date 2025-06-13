@@ -7,7 +7,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [userId, setUserId] = useState(() => {
-        const storedUserId = Cookies.get('userId');
+        const storedUserId = Cookies.get('userID');
         return storedUserId ? storedUserId : null;
     });
 
