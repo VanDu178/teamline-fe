@@ -14,7 +14,7 @@ const Chat = () => {
     useEffect(() => {
         //lôi đống này ra ngoài vì luôn connect socket khi vào app
         // *********************************************
-        setActiveChatUserId('6847b118948be903e901fa22'); // Thiết lập ID người dùng chat mặc định
+        setActiveChatUserId('684b06cb192792007c6a2913'); // Thiết lập ID người dùng chat mặc định
         // *********************************************
         const newSocket = connectSocket();
         setChatStore({ setMessages, setUserId, setUsername, setActiveChatUserId, activeChatUserIdRef }); // Truyền store context vào socketEvents nếu cần dùng chung

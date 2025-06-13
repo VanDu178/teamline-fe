@@ -51,7 +51,8 @@ export const handleTokenExpired = async () => {
           newSocket.emit(pendingEvent.event, pendingEvent.data);
           pendingEvent = null;
         }
-        // Đăng ký lại các sự kiện
+        // Đăng ký lại các sự kiện, vì socket là một instance nên khi ngắt kết nối và tạo token mới thì
+        //lúc đó các sự kiện đăng kí lúc đầu không còn nữa
         registerSocketEvents(newSocket);
       });
 
