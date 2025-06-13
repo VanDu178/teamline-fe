@@ -8,20 +8,69 @@
   align-items: center;
   min-height: 100vh;
   transition: background-color 0.3s ease, color 0.3s ease;
-  border-right: 10px;
+  border-right: 1px solid var(--border-color); /* Sửa từ 10px thành 1px solid */
 }
 
+/* Avatar container */
+.avatar-container {
+  position: relative; /* Định vị cha cho avatar-box */
+  margin-bottom: 1rem; /* Giữ khoảng cách với các icon */
+}
+
+/* Avatar styles */
 .avatar {
+  margin:0px !important;
   border-radius: 50%;
-  margin-bottom: 1rem;
   width: 50px;
   height: 50px;
   object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Responsive adjustments */
+.avatar:hover,
+.avatar.active {
+  transform: scale(1.1); /* Phóng to khi hover hoặc active */
+  box-shadow: 0 0 10px rgba(30, 144, 255, 0.5); /* Hiệu ứng glow xanh */
+}
+
+/* Avatar box */
+.avatar-box {
+  position: absolute;
+  top: 30px; /* Căn dưới avatar */
+  right: -180px; /* Đẩy box ra bên phải */
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 0.5rem 0;
+  min-width: 150px;
+  z-index: 10; /* Đảm bảo box hiển thị trên các phần tử khác */
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.avatar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.avatar-item {
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
+
+.avatar-item:hover {
+  background-color: var(--input-background);
+  color: var(--link-color);
+  transform: translateX(1px); /* Hiệu ứng dịch sang phải khi hover */
+}
+
+/* Icon styles */
 .icon {
-  padding:6px;
+  padding: 6px;
   border-radius: 3px;
   margin-bottom: 1rem;
   cursor: pointer;
@@ -33,20 +82,19 @@
 
 .icon:hover,
 .icon.active {
-  color: var(--link-color); 
-  background-color: var(--background-hover); 
+  color: var(--link-color);
+  background-color: var(--background-hover);
 }
 
-
-
+/* Settings styles */
 .settings {
-   display: flex;
+  display: flex;
 }
 
 .settings-box {
   position: absolute;
-  top: -50px; /* Căn theo đỉnh của icon */
-  right: -180px; /* Giữ khoảng cách như code trước, đẩy box ra bên phải */
+  top: -6px; /* Căn theo đỉnh của icon */
+  right: -160px; /* Giữ khoảng cách như code trước, đẩy box ra bên phải */
   background-color: var(--card-background);
   border-radius: 8px;
   box-shadow: var(--shadow);
@@ -74,15 +122,10 @@
 .settings-item:hover {
   background-color: var(--input-background);
   color: var(--link-color);
-  transform: translateX(5px); /* Hiệu ứng dịch sang phải khi hover */
+  transform: translateX(1px); /* Hiệu ứng dịch sang phải khi hover */
 }
 
-/* Optional: Add active state for selected item (if needed) */
-.settings-item:active {
-  background-color: var(--button-background);
-  color: #ffffff;
-}
-
+/* Animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -103,11 +146,31 @@
     padding: 0.5rem;
     min-height: auto;
   }
+  .avatar-container {
+    margin-bottom: 0;
+    margin-right: 0.5rem;
+  }
   .avatar {
     width: 30px;
     height: 30px;
-    margin-bottom: 0;
-    margin-right: 0.5rem;
+  }
+  .avatar:hover,
+  .avatar.active {
+    transform: scale(1.15); /* Điều chỉnh hiệu ứng phóng to trên mobile */
+    box-shadow: 0 0 5px rgba(30, 144, 255, 0.5); /* Giảm glow trên mobile */
+  }
+  .avatar-box {
+    top: 40px; /* Điều chỉnh vị trí trên mobile */
+    right: -120px; /* Điều chỉnh khoảng cách cho mobile */
+    min-width: 120px;
+    transform: translateY(0);
+  }
+  .avatar-item {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .avatar-item:hover {
+    transform: translateX(3px); /* Giảm hiệu ứng dịch trên mobile */
   }
   .icon {
     font-size: 1rem;
@@ -129,18 +192,35 @@
   .settings-item:hover {
     transform: translateX(3px); /* Giảm hiệu ứng dịch trên mobile */
   }
-  .icon:hover {
-    transform: scale(1.15); /* Giảm hiệu ứng phóng to trên mobile */
-  }
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
   .leftsidebar {
     width: 50px;
   }
+  .avatar-container {
+    margin-bottom: 0.75rem;
+  }
   .avatar {
     width: 40px;
     height: 40px;
+  }
+  .avatar:hover,
+  .avatar.active {
+    transform: scale(1.1); /* Điều chỉnh hiệu ứng phóng to trên tablet */
+    box-shadow: 0 0 8px rgba(30, 144, 255, 0.5); /* Điều chỉnh glow trên tablet */
+  }
+  .avatar-box {
+    top: 50px; /* Điều chỉnh vị trí trên tablet */
+    right: -130px; /* Điều chỉnh cho tablet */
+    min-width: 130px;
+  }
+  .avatar-item {
+    font-size: 0.85rem;
+    padding: 0.625rem 0.875rem;
+  }
+  .avatar-item:hover {
+    transform: translateX(4px); /* Điều chỉnh hiệu ứng dịch trên tablet */
   }
   .icon {
     font-size: 1.25rem;
@@ -157,8 +237,5 @@
   }
   .settings-item:hover {
     transform: translateX(4px); /* Điều chỉnh hiệu ứng dịch trên tablet */
-  }
-  .icon:hover {
-    transform: scale(1.1); /* Điều chỉnh hiệu ứng phóng to trên tablet */
   }
 }

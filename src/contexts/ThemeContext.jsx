@@ -1,12 +1,21 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
-
+import { createContext, useState, useContext, useEffect } from "react";
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
     const storageKey = "theme_default";
-    const savedTheme = localStorage.getItem(storageKey);
+    const [isDarkMode, setIsDarkMode] = useState(true);
+    // const [isLoading, setIsLoading] = useState(true);
 
-    const [isDarkMode, setIsDarkMode] = useState(savedTheme ? savedTheme === "dark" : true);
+    useEffect(() => {
+        const savedTheme = localStorage.getItem(storageKey);
+        const darkMode = savedTheme ? savedTheme === "dark" : true;
+        setIsDarkMode(darkMode);
+        document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
+
+        // setTimeout(() => {
+        //     setIsLoading(false); 
+        // }, 100); 
+    }, []);
 
     const toggleTheme = () => {
         const newTheme = !isDarkMode;
@@ -15,10 +24,9 @@ export const ThemeProvider = ({ children }) => {
         localStorage.setItem(storageKey, newTheme ? "dark" : "light");
     };
 
-    useEffect(() => {
-        document.documentElement.setAttribute("data-theme", isDarkMode ? "dark" : "light");
-        localStorage.setItem(storageKey, isDarkMode ? "dark" : "light");
-    }, [isDarkMode, storageKey]);
+    // if (isLoading) {
+    //     return <Skeleton />
+    // }
 
     return (
         <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>

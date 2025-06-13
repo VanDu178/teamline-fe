@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import LeftSidebar from "../../components/sidebar/LeftSideBar/LeftSideBar";
 import ChatList from "../../components/chat/ChatList/ChatList";
 import RightSideBar from "../../components/sidebar/RightSideBar/RightSideBar";
+import SkeletonLayout from "../SkeletonLayout/Skeleton";
 import ChatBox from "../../components/chatbox/ChatBox";
 import { useAuth } from "../../contexts/AuthContext";
 import { useChat } from "../../contexts/ChatContext";
@@ -12,10 +13,11 @@ import { emitSocketEvent } from '../../configs/socketEmitter';
 import "./Main.css";
 
 const Main = () => {
-    const { isAuthenticated, userId } = useAuth();
+    const { isAuthenticated, userId, isCheckingLogin } = useAuth();
     const { setMessages, roomId, roomIdRef } = useChat();
     const [showChat, setShowChat] = useState(false);
     const navigate = useNavigate();
+
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -32,6 +34,7 @@ const Main = () => {
         };
     }, [isAuthenticated]);
 
+
     useEffect(() => {
         if (roomId) {
             setShowChat(true);
@@ -40,17 +43,11 @@ const Main = () => {
         // Lưu trữ context chat vào socket để có thể sử dụng trong các sự kiện socket
     }, [roomId]);
 
-    // useEffect(() => {
-    //     if (!isCheckingLogin && !isAuthenticated) {
-    //         console.log("Chuyển hướng về login do chưa xác thực");
-    //         navigate('/login', { replace: true });
-    //     }
-    // }, [isAuthenticated, isCheckingLogin, navigate]);
 
+    if (isCheckingLogin) {
+        return <SkeletonLayout />
+    }
 
-    // if (isCheckingLogin) {
-    //     return <div>Loading...</div>; // Hoặc spinner đẹp hơn
-    // }
     return (
         <div className="flex-container">
             <LeftSidebar />
