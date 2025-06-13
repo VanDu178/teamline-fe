@@ -43,20 +43,12 @@ export const registerSocketEvents = (socket) => {
 
     const { setUserId, setUsername, setMessages, setActiveChatUserId, activeChatUserIdRef } = chatStore;
 
-    socket.on('private-message', ({ fromUserId, message, sentAt }) => {
+    socket.on('private-message', (msg) => {
         const activeChatUserId = activeChatUserIdRef?.current;
 
-        alert(`Tin nhắn mới từ ${fromUserId}: ${message}`);
-        alert(`ng đang chat: ${activeChatUserId}`);
-        if (fromUserId === activeChatUserId) {
-            setMessages((prev) => [
-                ...prev,
-                {
-                    fromUserId,
-                    text: message,
-                    time: new Date(sentAt).toLocaleTimeString(),
-                },
-            ]);
+        //kiểm tra xem tin nhắn có phải từ người dùng đang chat hay không
+        if (msg.sender === activeChatUserId || msg.sender._id === activeChatUserId) {
+            setMessages((prev) => [...prev, msg]);
         }
     });
 

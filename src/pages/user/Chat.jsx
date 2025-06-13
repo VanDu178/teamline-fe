@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { connectSocket, disconnectSocket, registerSocketEvents, setChatStore } from '../../utils/socket';
 import { emitSocketEvent } from '../../configs/socketEmitter';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from "../../contexts/AuthContext";
 import '../../styles/chat.css';
+import axiosInstance from '../../configs/axiosInstance';
 
 const Chat = () => {
     const { userId, setUserId, username, setUsername, messages, setMessages, activeChatUserId, setActiveChatUserId, activeChatUserIdRef } = useChat();
@@ -16,6 +17,7 @@ const Chat = () => {
         // *********************************************
         setActiveChatUserId('6847b118948be903e901fa22'); // Thiết lập ID người dùng chat mặc định
         // *********************************************
+        setUserId('6847b2e86b7a7c0a3d049990'); // Thiết lập ID người dùng mặc định
         const newSocket = connectSocket();
         setChatStore({ setMessages, setUserId, setUsername, setActiveChatUserId, activeChatUserIdRef }); // Truyền store context vào socketEvents nếu cần dùng chung
 
@@ -27,16 +29,73 @@ const Chat = () => {
         };
     }, [setMessages, setUserId, setUsername, setActiveChatUserId]);
 
+    useEffect(() => {
+        const fetchMessages = async () => {
+            const page = 1; // Giả sử bạn muốn lấy trang đầu tiên
+            const res = await axiosInstance.get(`/messages/${activeChatUserIdRef?.current}/${page}`);
+            console.log('res', res.data);
+            if (res.status === 200) {
+                setMessages(res.data.messages);
+            }
+        };
+
+        fetchMessages();
+    }, []);
+
+    const handleAddReaction = async (messageId) => {
+        try {
+            // Gửi socket event hoặc gọi API để thêm reaction
+            emitSocketEvent('add-reaction', { messageId });
+
+            // Cập nhật UI ngay (cập nhật tạm thời, nếu cần)
+            setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                    msg._id === messageId
+                        ? { ...msg, reactions: [...msg.reactions, userId] }
+                        : msg
+                )
+            );
+        } catch (error) {
+            console.error('Lỗi khi thêm reaction:', error);
+        }
+    };
+
+    const handleRemoveReaction = async (messageId) => {
+        try {
+            // Gửi socket event hoặc gọi API để xóa reaction
+            emitSocketEvent('remove-reaction', { messageId, userId });
+
+            // Cập nhật UI ngay (cập nhật tạm thời, nếu cần)
+            setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                    msg._id === messageId
+                        ? { ...msg, reactions: msg.reactions.filter((id) => id !== userId) }
+                        : msg
+                )
+            );
+        } catch (error) {
+            console.error('Lỗi khi xóa reaction:', error);
+        }
+    };
+
     const handleSendMessage = () => {
         if (message && toUserId) {
             emitSocketEvent('private-message', { toUserId, message });
             setMessages((prev) => [
                 ...prev,
                 {
-                    fromUserId: userId,
-                    fromUsername: username,
-                    text: message,
-                    time: new Date().toLocaleTimeString(),
+                    sender: {
+                        _id: userId,
+                    },
+                    content: message,
+                    type: "text",
+                    fileUrl: null,
+                    replyTo: null,
+                    reactions: [],
+                    seenBy: [], // Người gửi đã xem
+                    chat: "temp-chat-id", // ID phòng chat tạm
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 },
             ]);
             setMessage('');
@@ -44,6 +103,19 @@ const Chat = () => {
             alert('Vui lòng nhập tin nhắn và ID người nhận');
         }
     };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            if (e.shiftKey) {
+                // Nếu nhấn Shift + Enter thì cho phép xuống dòng
+                return;
+            } else {
+                // Nếu chỉ nhấn Enter thì gửi tin nhắn
+                e.preventDefault(); // Ngăn xuống dòng (nếu đang dùng textarea)
+                handleSendMessage();
+            }
+        }
+    }
 
     return (
         <div className="chat-container">
@@ -75,19 +147,47 @@ const Chat = () => {
                 {messages.map((msg, index) => (
                     <div
                         key={index}
-                        className={`message-container ${msg.fromUserId === userId ? 'sent' : 'received'}`}
+                        className={`message-container ${msg?.sender?._id === userId ? 'sent' : 'received'}`}
                     >
                         <div className="message-content">
-                            <div className="message-text">{msg.text}</div>
+                            <div className="message-text">
+                                {msg?.content?.split('\n')?.map((line, index) => (
+                                    <React.Fragment key={index}>
+                                        {line}
+                                        <br />
+                                    </React.Fragment>
+                                ))}
+                            </div>
                             <div className="message-time">
-                                {msg.time}
-                                {msg.fromUserId === userId && (
-                                    <span className="status-icon">
-                                        <i className="fas fa-check-double"></i>
-                                    </span>
-                                )}
+                                {new Date(msg.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                         </div>
+
+                        {/* Nút tim (chưa tim/đã tim) */}
+                        <button className={`heart-btn ${msg?.reactions?.includes(userId) ? 'reacted' : ''}`}>
+                            <i
+                                className={msg?.reactions?.includes(userId) ? "fas fa-heart" : "far fa-heart"}
+                                onClick={() => {
+                                    if (msg?.reactions?.includes(userId)) {
+                                        handleRemoveReaction(msg._id); // Ví dụ: hàm bỏ tim
+                                    } else {
+                                        handleAddReaction(msg._id); // Ví dụ: hàm thả tim
+                                    }
+                                }}
+                            >
+
+                            </i>
+                        </button>
+
+                        {/* Nút reaction (chỉ hiện khi có reaction) */}
+                        {msg.reactions && msg.reactions.length > 0 && (
+                            <button className="reaction-badge">
+                                <i className="fas fa-heart"></i>
+                                <span className="reaction-count">{msg.reactions.length}</span>
+                            </button>
+                        )}
+
+                        {/* khi người reaction là chính mình thì hiển thị nút xóa reaction */}
                     </div>
                 ))}
                 <div
@@ -115,11 +215,10 @@ const Chat = () => {
                         placeholder="Nhập ID người nhận..."
                         className="input-to-user"
                     />
-                    <input
-                        type="text"
+                    <textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        // onKeyPress={handleKeyPress}
+                        onKeyDown={handleKeyPress}
                         placeholder="Nhập tin nhắn..."
                         className="input-message"
                     />
