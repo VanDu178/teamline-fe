@@ -134,7 +134,7 @@ const ChatList = () => {
                                 name={item.name}
                                 email={item.email}
                                 avatar={item.avatar}
-                                userId={item._id}
+                                chatId={item._id}
                             />
 
                         )
