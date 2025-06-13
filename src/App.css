@@ -1,6 +1,10 @@
   /* Light mode (default) */
 :root {
-  --background: #ffffff;
+  --background: #fff;
+  --background-secondary:#005adf;
+  --background-tertiary: #ebecf0;
+  --background-hover: #374151; 
+
   --card-background: #f7f7f7;
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
@@ -10,11 +14,19 @@
   --link-color: #3b82f6;
   --link-hover: #60a5fa;
   --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  --background-hover: #d1d5db; /* Màu nền hover cho light mode */
+
+  
+
+
 }
   /* Dark mode */
 [data-theme="dark"] {
-  --background: #1a202c;
+  --background: #22252a;
+  --background-secondary: #131416;
+  --background-tertiary:#16191e;
+  --background-hover:#374151;
+
+
   --card-background: rgba(47, 55, 72, 0.9);
   --text-primary: #e2e8f0;
   --text-secondary: #a0aec0;
@@ -24,7 +36,6 @@
   --link-color: #60a5fa;
   --link-hover: #93c5fd;
   --shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-  --background-hover: #374151; /* Màu nền hover cho dark mode */
 }
 
 /* Global styles using variables */

@@ -1,6 +1,6 @@
 .main {
   width: 780px;
-  background-color: var(--background);
+  background-color: var(--background-tertiary);
   color: var(--text-primary);
   padding: 1.5rem;
   display: flex;
