@@ -5,45 +5,65 @@ import axiosInstance from "../configs/axiosInstance";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [userId, setUserId] = useState(() => {
-        const storedUserId = Cookies.get('userID');
-        return storedUserId ? storedUserId : null;
-    });
     const [isCheckingLogin, setIsCheckingLogin] = useState(true);
+    const [userId, setUserId] = useState(() => {
+        // const storedUserId = Cookies.get('userID');
+        // return storedUserId ? storedUserId : null;
+        return Cookies.get('userID');
+    });
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
         return Cookies.get("isLoggedIn") ? true : false;
     });
+    const [user, setUser] = useState(() => {
+        const userCookie = Cookies.get("user");
+        return userCookie ? JSON.parse(userCookie) : null;
+    });
+
 
     useEffect(() => {
-        const isLoggedIn = Cookies.get("isLoggedIn");
-        if (!isLoggedIn) {
-            const userID = Cookies.get("userID");
-            if (isLoggedIn && userID) {
-                setIsAuthenticated(true);
-            }
+        if (!userId || !isAuthenticated || !user) {
+            checkAuth();
         }
         setIsCheckingLogin(false);
-    }, [isAuthenticated]);
+    }, [userId, isAuthenticated, user])
+
+    const checkAuth = async () => {
+        try {
+            const response = await axiosInstance.get("/auth/me");
+            if (response?.data?.user) {
+                loggedIn(response?.data?.user);
+            }
+        }
+        catch (error) {
+            return;
+        }
+        finally {
+            setIsCheckingLogin(false);
+        }
+    }
 
     const loggedIn = (userData) => {
-        console.log("loggedIn", userData);
+        console.log()
         Cookies.set("isLoggedIn", "isAuthenticated", { expires: 7 });
         Cookies.set("userID", userData._id, { expires: 365 });
-        setUser(userData);
+        Cookies.set("user", JSON.stringify(userData), { expires: 365 });
         setIsAuthenticated(true);
+        setUser(userData);
+        setUserId(userData._id);
     };
 
     const logout = async () => {
         await axiosInstance.post("/auth/logout");
-        setUser(null);
         setIsAuthenticated(false);
+        setUser(null);
+        setUserId(null);
         Cookies.remove("isLoggedIn");
         Cookies.remove("userID");
+        Cookies.remove("user");
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated, loggedIn, logout, isCheckingLogin, userId, setUserId }}>
+        <AuthContext.Provider value={{ user, isAuthenticated, loggedIn, logout, isCheckingLogin, userId, setUserId, setUser }}>
             {children}
         </AuthContext.Provider>
     );

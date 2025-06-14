@@ -45,7 +45,6 @@ const ChatList = () => {
     const fetchChats = async (pageNumber) => {
         try {
             const response = await axiosInstance.get(`/chats?page=${pageNumber}&limit=10`);
-            console.log("Fetched chats:", response.data);
             const newChats = response.data?.chatsWithLastMessage || [];
             const total = response.data?.total || 0;
 

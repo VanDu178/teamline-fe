@@ -13,40 +13,30 @@ import { emitSocketEvent } from '../../configs/socketEmitter';
 import "./Main.css";
 
 const Main = () => {
-    const { isAuthenticated, userId, isCheckingLogin } = useAuth();
+    const { isAuthenticated, userId, user } = useAuth();
     const { setMessages, roomId, roomIdRef } = useChat();
     const [showChat, setShowChat] = useState(false);
-    const navigate = useNavigate();
 
 
     useEffect(() => {
-        if (!isAuthenticated) {
-            alert("Phien dang nhap da het han")
-            navigate('/login', { replace: true });
-        }
-        if (isAuthenticated) {
+        if (isAuthenticated && userId && user) {
             console.log("Kết nối socket khi đăng nhập thành công");
-            const newSocket = connectSocket(); // connect trước
-            setChatStore({ setMessages, roomIdRef }); // set store và tự động register luôn ở đây
+            const newSocket = connectSocket();
+            setChatStore({ setMessages, roomIdRef });
         }
         return () => {
             disconnectSocket();
         };
-    }, [isAuthenticated]);
+    }, [userId, isAuthenticated, user]);
 
 
     useEffect(() => {
         if (roomId) {
             setShowChat(true);
-            emitSocketEvent('join-room', { roomId }); // Tham gia phòng chat khi component mount
+            emitSocketEvent('join-room', { roomId });
         }
-        // Lưu trữ context chat vào socket để có thể sử dụng trong các sự kiện socket
     }, [roomId]);
 
-
-    if (isCheckingLogin) {
-        return <SkeletonLayout />
-    }
 
     return (
         <div className="flex-container">
