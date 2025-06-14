@@ -1,24 +1,25 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { toast } from 'react-toastify';
+import Cookies from "js-cookie";
+import UserInforModal from "../../modal/UserInforModal/UserInforModal";
+import SettingsModal from "../../modal/SettingsModal/SettingsModal";
+import { useAuth } from "../../../contexts/AuthContext";
+import { ThemeProvider, useTheme } from "../../../contexts/ThemeContext";
+import imgUserDefault from "../../../assets/images/img-user-default.jpg";
+import axiosInstance from "../../../configs/axiosInstance";
 import "./LeftSideBar.css";
-import UserInfo from "../../../components/modal/UserInfor/UserInfor"; // Nhập modal
 
-const Sidebar = () => {
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+const LeftSideBar = () => {
     const [isAvataOpen, setIsAvataOpen] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false); // State cho modal
+    const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [activeIcon, setActiveIcon] = useState(null);
-    const [userInfo, setUserInfo] = useState({
-        name: "Nguyen Van A",
-        email: "nguyenvana@example.com",
-        phone: "0901234567",
-    }); // Dữ liệu mẫu
-    const [editedInfo, setEditedInfo] = useState({ ...userInfo }); // Dữ liệu đang chỉnh sửa
+    const { user, setUser, logout } = useAuth();
+    const [editedInfo, setEditedInfo] = useState({ ...user });
+    const { isDarkMode, toggleTheme } = useTheme();
     const sidebarRef = useRef(null);
 
-    const handleSettingsClick = () => {
-        setIsSettingsOpen(!isSettingsOpen);
-        setActiveIcon(activeIcon === "settings" ? null : "settings");
-    };
 
     const handleAvatarClick = () => {
         setIsAvataOpen(!isAvataOpen);
@@ -26,60 +27,97 @@ const Sidebar = () => {
     };
 
     const handleIconClick = (iconName) => {
-        if (iconName !== "settings" && iconName !== "avatar" && (isSettingsOpen || isAvataOpen)) {
-            setIsSettingsOpen(false);
+        if (iconName !== "avatar" && isAvataOpen) {
             setIsAvataOpen(false);
         }
         setActiveIcon(activeIcon === iconName ? null : iconName);
     };
 
-    const handleOpenModal = () => {
-        setIsModalOpen(true);
-        setEditedInfo({ ...userInfo }); // Reset dữ liệu chỉnh sửa khi mở modal
-    };
-
-    const handleSaveChanges = () => {
-        setUserInfo({ ...editedInfo }); // Lưu thay đổi vào userInfo
-        setIsModalOpen(false); // Đóng modal
-        alert("Thông tin đã được cập nhật!");
-    };
-
-    const handleCancel = () => {
-        setIsModalOpen(false); // Đóng modal mà không lưu
-    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-                setIsSettingsOpen(false);
                 setIsAvataOpen(false);
                 setActiveIcon(null);
             }
         };
-
         document.addEventListener("mousedown", handleClickOutside);
-
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
 
+
+    //UserInfoModal
+    const handleOpenUserInfoModal = () => {
+        setIsUserInfoModalOpen(true);
+        setIsAvataOpen(false);
+        setActiveIcon(null);
+        setEditedInfo({ ...user });
+    };
+
+    const handleCancel = () => {
+        setIsUserInfoModalOpen(false);
+    };
+
+
+    const handleSaveChanges = async () => {
+        try {
+            const formData = new FormData();
+            formData.append("username", editedInfo.username);
+            // Nếu là File, gửi lên
+            if (editedInfo.avatar instanceof File) {
+                formData.append("avatar", editedInfo.avatar);
+            }
+            // Nếu người dùng đã xoá avatar (rỗng chuỗi), báo backend
+            if (editedInfo.avatar === "") {
+                formData.append("removeAvatar", "true");
+            }
+            // Gửi formData bằng Axios
+            const response = await axiosInstance.put(`/users/${user._id}`, formData);
+            const updatedUser = response.data?.user;
+            setUser(updatedUser);
+            setIsUserInfoModalOpen(false);
+            toast.success("Cập nhật thông tin thành công");
+            Cookies.set("user", JSON.stringify(updatedUser), { expires: 365 });
+        } catch (error) {
+            console.error("Lỗi cập nhật:", error);
+        }
+    };
+
+
+
+
+    //Modal setting
+    const handleCloseSettingsModal = () => {
+        setIsSettingsModalOpen(false);
+    };
+
+    const handleOpenSettingModal = () => {
+        setIsSettingsModalOpen(true);
+    };
+
+
+
     return (
         <div className="leftsidebar" ref={sidebarRef}>
             <div className="avatar-container">
                 <img
-                    src="https://plus.unsplash.com/premium_photo-1664474619075-644dd191935f?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFrY2h8MXx8aW1hZ2V8ZW58MHx8MHx8fDA%3D"
+                    src={user?.avatar || imgUserDefault}
                     alt="avatar"
                     className={`avatar ${activeIcon === "avatar" ? "active" : ""}`}
                     onClick={handleAvatarClick}
+                    onError={(e) => (e.target.src = imgUserDefault)}
                 />
+
                 {isAvataOpen && (
                     <div className="avatar-box">
                         <ul className="avatar-list">
-                            <li className="avatar-item">Chỉnh sửa ảnh đại diện</li>
-                            <li className="avatar-item" onClick={handleOpenModal}>
+                            <li className="avatar-item" onClick={handleOpenUserInfoModal}>
                                 Xem thông tin
                             </li>
+                            <li className="avatar-item" onClick={logout}>Đăng xuất</li>
+                            <li className="avatar-item" onClick={handleOpenSettingModal}>Cài đặt</li>
                         </ul>
                     </div>
                 )}
@@ -103,30 +141,24 @@ const Sidebar = () => {
             >
                 🔒
             </span>
-            <span
-                className={`icon settings ${activeIcon === "settings" ? "active" : ""}`}
-                onClick={handleSettingsClick}
-            >
-                ⚙️
-                {isSettingsOpen && (
-                    <div className="settings-box">
-                        <ul className="settings-list">
-                            <li className="settings-item">Thông tin tài khoản</li>
-                            <li className="settings-item">Đăng xuất</li>
-                        </ul>
-                    </div>
-                )}
-            </span>
 
-            <UserInfo
-                isOpen={isModalOpen}
+            <UserInforModal
+                isOpen={isUserInfoModalOpen}
                 onClose={handleCancel}
                 onSave={handleSaveChanges}
-                userInfo={editedInfo}
                 onChange={setEditedInfo}
+                editedInfo={editedInfo}
+                setEditedInfo={setEditedInfo}
+                isEditable={true}
+            />
+            <SettingsModal
+                isOpen={isSettingsModalOpen}
+                onClose={handleCloseSettingsModal}
+                theme={isDarkMode ? "Tối" : "Sáng"}
+                setTheme={(newTheme) => toggleTheme()}
             />
         </div>
     );
 };
 
-export default Sidebar;
+export default LeftSideBar;

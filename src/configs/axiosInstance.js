@@ -29,12 +29,12 @@ axiosInstance.interceptors.response.use(
         if (res.status === 200) {
           Cookies.remove("isLoggedIn");
           Cookies.set("isLoggedIn", "isAuthenticated", { expires: 7 });
-          console.log("Refresh token success, retry original request");
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
-        console.log("Refresh token failed, redirect to login");
-        // window.location.href = "/login";
+        Cookies.remove("isLoggedIn");
+        Cookies.remove("userID");
+        Cookies.remove("user");
         return Promise.reject(refreshError);
       }
     }

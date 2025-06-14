@@ -18,11 +18,10 @@ export const connectSocket = () => {
       withCredentials: true,
       transports: ["websocket"],
     });
-
     socket.on("connect", () => {
       console.log("Socket connected:", socket.id);
       //join room tổng khi đăng nhập thành công
-      socket.emit('join-user', {});
+      socket.emit("join-user", {});
     });
 
     socket.on("connect_error", (error) => {
@@ -46,13 +45,10 @@ export const registerSocketEvents = (socket) => {
   const userId = Cookies.get("userID");
   if (!socket || !chatStore) return;
 
-  const {
-    setMessages,
-    roomIdRef,
-  } = chatStore;
+  const { setMessages, roomIdRef } = chatStore;
 
-  // sự kiện nhân tin nhắn
-  socket.on('received-message', (msg) => {
+  // sự kiện nhân tin nhắn,
+  socket.on("received-message", (msg) => {
     if (msg.sender === userId) {
       return;
     }
@@ -72,14 +68,20 @@ export const registerSocketEvents = (socket) => {
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
           msg.localId === localId
-            ? { ...msg, chat: chatId, createdAt: sentAt, updatedAt: sentAt, _id: messageId }
+            ? {
+                ...msg,
+                chat: chatId,
+                createdAt: sentAt,
+                updatedAt: sentAt,
+                _id: messageId,
+              }
             : msg
         )
       );
     }
   });
 
-  socket.on('reaction-added', (data) => {
+  socket.on("reaction-added", (data) => {
     const { messageId, userId } = data;
     // Cập nhật UI
     setMessages((prevMessages) =>
@@ -91,10 +93,10 @@ export const registerSocketEvents = (socket) => {
     );
   });
 
-  socket.on('reaction-removed', (data) => {
+  socket.on("reaction-removed", (data) => {
     const { messageId, userId } = data;
 
-    // Cập nhật UI 
+    // Cập nhật UI
     setMessages((prevMessages) =>
       prevMessages.map((msg) =>
         msg._id === messageId

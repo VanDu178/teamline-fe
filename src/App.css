@@ -4,7 +4,7 @@
   --background-secondary:#005adf;
   --background-tertiary: #ebecf0;
   --background-hover: #e8eaee; 
-
+  --background-sendtext:#e5f1ff;
   --card-background: #f7f7f7;
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
@@ -25,7 +25,7 @@
   --background-secondary: #131416;
   --background-tertiary:#16191e;
   --background-hover:#374151;
-
+ --background-sendtext:#1c354e;
 
   --card-background: rgba(47, 55, 72, 0.9);
   --text-primary: #e2e8f0;

@@ -1,14 +1,15 @@
+import { useEffect, useState } from "react";
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../configs/axiosInstance";
 import { emailValidator, passwordValidator } from "../../helpers/validation";
 import { useAuth } from "../../contexts/AuthContext";
 import "../../styles/login.css";
-import { useEffect, useState } from "react";
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+
 
 const Login = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, loggedIn } = useAuth();
+    const { loggedIn } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -17,12 +18,6 @@ const Login = () => {
     });
     const [error, setError] = useState(null);
     const [showResendLink, setShowResendLink] = useState(false);
-
-    useEffect(() => {
-        if (isAuthenticated) {
-            navigate("/");
-        }
-    }, [isAuthenticated, navigate]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -58,8 +53,8 @@ const Login = () => {
                 email,
                 password,
             });
+            navigate("/", { replace: true });
             loggedIn(res.data?.existingUser);
-            navigate("/");
         } catch (err) {
             const msg = err.response?.data?.message || "Đăng nhập thất bại";
             if (err.response?.status === 403 && err.response?.data?.err_code === "ACCOUNT_NOT_ACTIVATED") {
