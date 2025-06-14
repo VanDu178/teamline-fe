@@ -13,17 +13,15 @@ export const setChatStore = (store) => {
 };
 
 export const connectSocket = () => {
-  const userId = Cookies.get("userID");
   if (!socket) {
     socket = io(process.env.REACT_APP_BACKEND_URL, {
       withCredentials: true,
       transports: ["websocket"],
     });
-
     socket.on("connect", () => {
       console.log("Socket connected:", socket.id);
       //join room tổng khi đăng nhập thành công
-      socket.emit('join-user', {});
+      socket.emit("join-user", {});
     });
 
     socket.on("connect_error", (error) => {
@@ -44,16 +42,16 @@ export const connectSocket = () => {
 };
 
 export const registerSocketEvents = (socket) => {
+  const userId = Cookies.get("userID");
   if (!socket || !chatStore) return;
 
-  const {
-    setMessages,
-    roomIdRef,
-  } = chatStore;
+  const { setMessages, roomIdRef } = chatStore;
 
-  // sự kiện nhân tin nhắn
-  socket.on('received-message', (msg) => {
-    console.log("nhận tin nhắn", msg);
+  // sự kiện nhân tin nhắn,
+  socket.on("received-message", (msg) => {
+    if (msg.sender === userId) {
+      return;
+    }
     const roomId = roomIdRef?.current;
 
     // kiểm tra xem tin nhắn có phải được gửi từ nhóm chat đang mở không
@@ -64,6 +62,48 @@ export const registerSocketEvents = (socket) => {
 
   socket.on("message-sent", (data) => {
     console.log("Message sent confirmation:", data);
+    const { chatId, sentAt, status, localId, messageId } = data;
+
+    if (status === "saved") {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.localId === localId
+            ? {
+                ...msg,
+                chat: chatId,
+                createdAt: sentAt,
+                updatedAt: sentAt,
+                _id: messageId,
+              }
+            : msg
+        )
+      );
+    }
+  });
+
+  socket.on("reaction-added", (data) => {
+    const { messageId, userId } = data;
+    // Cập nhật UI
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg._id === messageId
+          ? { ...msg, reactions: [...msg.reactions, userId] }
+          : msg
+      )
+    );
+  });
+
+  socket.on("reaction-removed", (data) => {
+    const { messageId, userId } = data;
+
+    // Cập nhật UI
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg._id === messageId
+          ? { ...msg, reactions: msg.reactions.filter((id) => id !== userId) }
+          : msg
+      )
+    );
   });
 
   socket.on("error", ({ message }) => {

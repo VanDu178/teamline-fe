@@ -15,6 +15,7 @@ const ChatList = () => {
     const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
+        console.log("lap vo cung");
         if (!isSearching) {
             fetchChats(page);
         }
@@ -65,9 +66,10 @@ const ChatList = () => {
         setIsLoading(true);
         try {
             const response = await axiosInstance.get(`/users/${searchTerm}`);
-            const user = response.data?.user;
+            console.log("thong tin seach", response);
+            const user = response?.data?.user;
             console.log("thong tin user", user);
-            setChats(user ? [user] : []);
+            setChats(user ? [{ ...user, chatId: response?.data?.chatId }] : []);
             setHasMore(false);
         } catch (err) {
             console.error("Error searching chats:", err);
@@ -114,7 +116,7 @@ const ChatList = () => {
             ) : error ? (
                 <div className="error-state">
                     Có lỗi xảy ra, vui lòng thử lại!
-                    <button onClick={fetchChats(page)}>Tải lại</button>
+                    {/* <button onClick={fetchChats(page)}>Tải lại</button> */}
                 </div>
             ) : chats.length === 0 ? (
                 <div className="empty-state">Bạn chưa có cuộc hội thoại nào</div>
@@ -124,16 +126,17 @@ const ChatList = () => {
                         isSearching ? (
                             <UserItem
                                 key={idx}
-                                name={item.username}
-                                avatar={item.avatar || ""}
+                                name={item?.username}
+                                avatar={item?.avatar || ""}
+                                chatId={item?.chatId}
                             />
                         ) : (
                             <ChatItem
                                 key={idx}
-                                name={item.name}
-                                email={item.email}
-                                avatar={item.avatar}
-                                chatId={item._id}
+                                name={item?.name}
+                                email={item?.email}
+                                avatar={item?.avatar}
+                                chatId={item?._id}
                             />
 
                         )

@@ -3,10 +3,11 @@ import './UserItem.css';
 import { useChat } from '../../../contexts/ChatContext';
 import { emitSocketEvent } from '../../../configs/socketEmitter';
 
-const ChatItem = ({ name, avatar }) => {
-    console.log("ten", name)
+const ChatItem = ({ name, avatar, chatId }) => {
     const handleClick = () => {
+        console.log("ten", chatId)
 
+        alert("File UserItem", chatId)
     }
     return (
         <div className="chat-item" onClick={handleClick}>

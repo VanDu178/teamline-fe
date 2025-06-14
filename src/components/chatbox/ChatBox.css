@@ -85,6 +85,8 @@
   background-repeat: repeat;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  height: 100%;
 }
 
 .date-divider {

@@ -1,14 +1,14 @@
-import { use, useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
 import LeftSidebar from "../../components/sidebar/LeftSideBar/LeftSideBar";
 import ChatList from "../../components/chat/ChatList/ChatList";
 import RightSideBar from "../../components/sidebar/RightSideBar/RightSideBar";
-import SkeletonLayout from "../SkeletonLayout/Skeleton";
 import ChatBox from "../../components/chatbox/ChatBox";
 import { useAuth } from "../../contexts/AuthContext";
 import { useChat } from "../../contexts/ChatContext";
 import { connectSocket, disconnectSocket, registerSocketEvents, setChatStore } from '../../utils/socket';
 import { emitSocketEvent } from '../../configs/socketEmitter';
+
 
 import "./Main.css";
 
@@ -18,16 +18,27 @@ const Main = () => {
     const [showChat, setShowChat] = useState(false);
 
 
+    // useEffect(() => {
+    //     if (isAuthenticated && userId && user) {
+    //         console.log("Kết nối socket khi đăng nhập thành công");
+    //         connectSocket();
+    //         setChatStore({ setMessages, roomIdRef });
+    //     }
+    //     return () => {
+    //         disconnectSocket();
+    //     };
+    // }, [userId, isAuthenticated, user]);
+
     useEffect(() => {
-        if (isAuthenticated && userId && user) {
+        if (isAuthenticated) {
             console.log("Kết nối socket khi đăng nhập thành công");
-            const newSocket = connectSocket();
-            setChatStore({ setMessages, roomIdRef });
+            connectSocket();
+            setChatStore({ setMessages, roomIdRef }); // set store và tự động register luôn ở đây
         }
         return () => {
             disconnectSocket();
         };
-    }, [userId, isAuthenticated, user]);
+    }, []);
 
 
     useEffect(() => {
