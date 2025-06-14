@@ -1,43 +1,102 @@
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { setChatStore } from '../../utils/socket';
 import { emitSocketEvent } from '../../configs/socketEmitter';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from "../../contexts/AuthContext";
 import './ChatBox.css';
 import axiosInstance from '../../configs/axiosInstance';
+import ClipLoader from "react-spinners/ClipLoader";
 
 const ChatBox = () => {
     const { messages, setMessages, roomId, roomIdRef, toUserId, setToUserId } = useChat();
     const [message, setMessage] = useState('');
     const { userId } = useAuth();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [scrollAfterSending, setScrollAfterSending] = useState(false);
+    const [lockScroll, setLockScroll] = useState(false);
+
+    const messagesEndRef = useRef(null);
+    const scrollHeightBeforeRef = useRef(0);
+    const chatMessagesRef = useRef(null);
+
+    const scrollToBottom = (isInstant) => {
+        messagesEndRef.current?.scrollIntoView({
+            behavior: isInstant ? 'auto' : 'smooth'
+        });
+    };
 
     useEffect(() => {
-        const fetchMessages = async () => {
-            const page = 1; // Giả sử bạn muốn lấy trang đầu tiên
+        if (lockScroll) {
+            setLockScroll(false);
+        }
+        else if (currentPage === 1 || scrollAfterSending) {
+            scrollToBottom(true);
+        } else if (currentPage > 1 && chatMessagesRef.current) {
+            chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight - scrollHeightBeforeRef.current - 110;
+            //100 bù cho khi tới top còn 100 là load thêm dữ liệu
+        }
+        setScrollAfterSending(false);
+
+    }, [messages]);
+
+    const fetchMessages = async (page, isLoadMore = false) => {
+        try {
+            setLoading(true);
+            if (isLoadMore && chatMessagesRef.current) {
+                scrollHeightBeforeRef.current = chatMessagesRef.current.scrollHeight;
+            }
+
             const res = await axiosInstance.get(`/messages/${roomIdRef?.current}/${page}`);
-            console.log('res', res.data);
-            console.log("userId", userId);
             if (res.status === 200) {
-                setMessages(res.data.messages);
+                if (isLoadMore) {
+                    setMessages((prevMessages) => [...res.data.messages, ...prevMessages]);
+                } else {
+                    setMessages(res.data.messages);
+                }
+
+                setCurrentPage(page);
+                setHasMore(page < res.data.totalPages);
+            }
+        } catch (error) {
+            console.error("Lỗi khi load tin nhắn:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (roomId) {
+            fetchMessages(1);
+        }
+    }, [roomId]);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (!chatMessagesRef.current || loading || !hasMore) return;
+
+            const { scrollTop } = chatMessagesRef.current;
+
+            if (scrollTop < 100) { // Khi scroll gần top
+                fetchMessages(currentPage + 1, true);
             }
         };
 
-        fetchMessages();
-    }, [roomId]);
+        const chatMessagesElement = chatMessagesRef.current;
+        chatMessagesElement.addEventListener('scroll', handleScroll);
+
+        return () => {
+            chatMessagesElement.removeEventListener('scroll', handleScroll);
+        };
+    }, [currentPage, loading, hasMore]);
 
     const handleAddReaction = async (messageId) => {
         try {
             // Gửi socket event hoặc gọi API để thêm reaction
             emitSocketEvent('add-reaction', { messageId });
+            setLockScroll(true);
 
-            // Cập nhật UI ngay (cập nhật tạm thời, nếu cần)
-            setMessages((prevMessages) =>
-                prevMessages.map((msg) =>
-                    msg._id === messageId
-                        ? { ...msg, reactions: [...msg.reactions, userId] }
-                        : msg
-                )
-            );
         } catch (error) {
             console.error('Lỗi khi thêm reaction:', error);
         }
@@ -47,26 +106,22 @@ const ChatBox = () => {
         try {
             // Gửi socket event hoặc gọi API để xóa reaction
             emitSocketEvent('remove-reaction', { messageId, userId });
-
-            // Cập nhật UI ngay (cập nhật tạm thời, nếu cần)
-            setMessages((prevMessages) =>
-                prevMessages.map((msg) =>
-                    msg._id === messageId
-                        ? { ...msg, reactions: msg.reactions.filter((id) => id !== userId) }
-                        : msg
-                )
-            );
+            setLockScroll(true);
         } catch (error) {
             console.error('Lỗi khi xóa reaction:', error);
         }
     };
 
     const handleSendMessage = () => {
+        const localId = Date.now() + Math.random(); // ID tạm thời duy nhất
+
         if (message && roomId) {
-            emitSocketEvent('send-message', { roomId, message, toUserId });
+            emitSocketEvent('send-message', { roomId, message, toUserId, localId });
             setMessages((prev) => [
                 ...prev,
                 {
+                    messageId: null,
+                    localId, // Gắn ID tạm thời
                     sender: {
                         _id: userId,
                     },
@@ -77,11 +132,12 @@ const ChatBox = () => {
                     reactions: [],
                     seenBy: [],
                     chat: roomId,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
+                    createdAt: null,
+                    updatedAt: null
                 },
             ]);
             setMessage('');
+            setScrollAfterSending(true);
         } else {
             alert('Vui lòng nhập tin nhắn và ID người nhận');
         }
@@ -122,14 +178,19 @@ const ChatBox = () => {
                 </div>
             </div>
 
-            <div className="chat-messages">
+            <div className="chat-messages" ref={chatMessagesRef}>
+                {loading && (
+                    <div style={{ textAlign: 'center', margin: '10px 0' }}>
+                        <ClipLoader color="#36d7b7" size={20} />
+                    </div>
+                )}
                 <div className="date-divider">
                     <span>Hôm nay</span>
                 </div>
 
-                {messages.map((msg, index) => (
+                {messages.map((msg) => (
                     <div
-                        key={index}
+                        key={msg._id || msg.localId}
                         className={`message-container ${msg?.sender?._id === userId ? 'sent' : 'received'}`}
                     >
                         <div className="message-content">
@@ -142,7 +203,11 @@ const ChatBox = () => {
                                 ))}
                             </div>
                             <div className="message-time">
-                                {new Date(msg.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {
+                                    msg.createdAt ? (new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                    ) : (<ClipLoader color="#36d7b7" size={10} />
+                                    )
+                                }
                             </div>
                         </div>
 
@@ -158,7 +223,6 @@ const ChatBox = () => {
                                     }
                                 }}
                             >
-
                             </i>
                         </button>
 
@@ -174,7 +238,7 @@ const ChatBox = () => {
                     </div>
                 ))}
                 <div
-                // ref={messagesEndRef} 
+                    ref={messagesEndRef}
                 />
             </div>
 

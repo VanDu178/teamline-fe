@@ -26,7 +26,7 @@ const Main = () => {
         }
         if (isAuthenticated) {
             console.log("Kết nối socket khi đăng nhập thành công");
-            const newSocket = connectSocket(); // connect trước
+            connectSocket(); // connect
             setChatStore({ setMessages, roomIdRef }); // set store và tự động register luôn ở đây
         }
         return () => {
