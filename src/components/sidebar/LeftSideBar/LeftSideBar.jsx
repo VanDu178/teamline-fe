@@ -90,6 +90,7 @@ const LeftSideBar = () => {
 
     //Modal setting
     const handleCloseSettingsModal = () => {
+        setIsAvataOpen(false);
         setIsSettingsModalOpen(false);
     };
 

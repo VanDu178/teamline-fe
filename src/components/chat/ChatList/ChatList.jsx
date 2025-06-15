@@ -1,148 +1,224 @@
 import { useEffect, useState, useRef } from "react";
+import { HiMiniUserGroup } from "react-icons/hi2";
 import ChatItem from "../ChatItem/ChatItem";
 import UserItem from "../UserItem/UserItem"
+import { useAuth } from "../../../contexts/AuthContext";
 import axiosInstance from "../../../configs/axiosInstance";
+import imgGroupDefault from "../../../assets/images/img-group-default.jpg";
+import imgUserDefault from "../../../assets/images/img-user-default.jpg";
+
 import "./ChatList.css";
 
 const ChatList = () => {
     const [chats, setChats] = useState([]);
-    const [error, setError] = useState(false);
-    const [page, setPage] = useState(1);
+    const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [hasMore, setHasMore] = useState(true);
     const listRef = useRef(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
+    const isFetchingRef = useRef(false);
+    const [searchValue, setSearchValue] = useState("");
     const [isSearching, setIsSearching] = useState(false);
+    const [isInputFocused, setIsInputFocused] = useState(false);
+    const { user } = useAuth();
 
-    useEffect(() => {
-        console.log("lap vo cung");
-        if (!isSearching) {
-            fetchChats(page);
-        }
-    }, [page]);
+    const handleSearch = async () => {
+        const keyword = searchValue.trim();
+        if (!keyword) return;
 
-    useEffect(() => {
-        const handleScroll = () => {
-            const container = listRef.current;
-            if (!container || isLoading || !hasMore) return;
-
-            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 100) {
-                setPage((prev) => prev + 1);
-            }
-        };
-
-        const container = listRef.current;
-        if (container) {
-            container.addEventListener("scroll", handleScroll);
-        }
-
-        return () => {
-            if (container) {
-                container.removeEventListener("scroll", handleScroll);
-            }
-        };
-    }, [isLoading, hasMore]);
-
-    const fetchChats = async (pageNumber) => {
-        try {
-            const response = await axiosInstance.get(`/chats?page=${pageNumber}&limit=10`);
-            const newChats = response.data?.chatsWithLastMessage || [];
-            const total = response.data?.total || 0;
-
-            setChats((prev) => [...prev, ...newChats]);
-            setHasMore(chats.length + newChats.length < total);
-        } catch (err) {
-            console.error("Error fetching chats:", err);
-            setError(true);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-
-    const searchChats = async () => {
-        if (!searchTerm.trim()) return;
         setIsSearching(true);
         setIsLoading(true);
+        setError(null);
+
         try {
-            const response = await axiosInstance.get(`/users/${searchTerm}`);
-            console.log("thong tin seach", response);
-            const user = response?.data?.user;
-            console.log("thong tin user", user);
-            setChats(user ? [{ ...user, chatId: response?.data?.chatId }] : []);
+            const res = await axiosInstance.get(`/users/${keyword}`)
+            const user = res?.data?.user;
+            setChats(user ? [{ ...user, chatId: res?.data?.chatId }] : []);
             setHasMore(false);
         } catch (err) {
-            console.error("Error searching chats:", err);
-            setError(true);
+            setError({
+                message: "Không tìm thấy người dùng với email đó.",
+                retryable: false,
+            });
+            setChats([]);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleSearchKeyDown = (e) => {
+    const handleKeyDown = (e) => {
         if (e.key === "Enter") {
-            setPage(1); // Reset page
-            searchChats();
+            handleSearch();
         }
     };
 
-    const handleSearchChange = (e) => {
-        const value = e.target.value;
-        setSearchTerm(value);
-        if (!value) {
-            // If input is cleared, go back to normal chat list
-            setIsSearching(false);
-            setChats([]);
-            setPage(1);
+    const fetchChats = async () => {
+        if (isFetchingRef.current || !hasMore || isSearching) return;
+
+        isFetchingRef.current = true;
+        setError(null);
+        if (chats.length === 0) setIsLoading(true);
+
+        try {
+            const lastChat = chats[chats.length - 1];
+            const before = lastChat?.lastMessage?.createdAt;
+
+            const res = await axiosInstance.get("/chats", {
+                params: {
+                    limit: 15,
+                    ...(before && { before }),
+                },
+            });
+
+            const newChats = Array.isArray(res.data)
+                ? res.data
+                : res.data?.data || [];
+
+            setChats((prev) => [...prev, ...newChats]);
+
+            if (newChats.length < 15) setHasMore(false);
+        } catch (err) {
+            const retryable = err.response?.data?.retryable;
+            setError({
+                message: "Đã xảy ra lỗi khi tải danh sách chat.",
+                retryable,
+            });
+            console.error("Lỗi khi tải chats:", err);
+        } finally {
+            setIsLoading(false);
+            isFetchingRef.current = false;
         }
     };
 
+    useEffect(() => {
+        fetchChats();
+    }, []);
+
+    useEffect(() => {
+        const listEl = listRef.current;
+        if (!listEl) return;
+
+        const handleScroll = () => {
+            const { scrollTop, scrollHeight, clientHeight } = listEl;
+            if (scrollTop + clientHeight >= scrollHeight - 200) {
+                fetchChats();
+            }
+        };
+
+        listEl.addEventListener("scroll", handleScroll);
+        return () => listEl.removeEventListener("scroll", handleScroll);
+    }, [chats]);
 
     return (
         <div className="chatlist">
             <div className="chatlist-search">
                 <input
-                    placeholder="Tìm kiếm..."
+                    placeholder="Tìm kiếm theo email..."
                     className="search-input"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    onKeyDown={handleSearchKeyDown}
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    onFocus={() => {
+                        setIsInputFocused(true);
+                        setChats([]);
+                        setIsSearching(false);
+                    }}
+                    onKeyDown={handleKeyDown}
                 />
-
+                {isInputFocused && (
+                    <button
+                        className="search-close-btn"
+                        onClick={() => {
+                            setIsInputFocused(false);
+                            setSearchValue("");
+                            setIsSearching(false);
+                            setChats([]);
+                            setHasMore(true);
+                            fetchChats();
+                        }}
+                    >
+                        ✕
+                    </button>
+                )}
             </div>
 
             {isLoading && chats.length === 0 ? (
                 <div className="loading-state">Đang tải...</div>
             ) : error ? (
                 <div className="error-state">
-                    Có lỗi xảy ra, vui lòng thử lại!
-                    {/* <button onClick={fetchChats(page)}>Tải lại</button> */}
+                    {error.retryable ? (
+                        <>
+                            <div>Đã xảy ra lỗi, hãy thử lại.</div>
+                            <button onClick={fetchChats}>Thử lại</button>
+                        </>
+                    ) : (
+                        <div>{error.message}</div>
+                    )}
                 </div>
             ) : chats.length === 0 ? (
-                <div className="empty-state">Bạn chưa có cuộc hội thoại nào</div>
+                <div className="empty-state">
+                    {isSearching
+                        ? "Không tìm thấy người dùng nào."
+                        : "Bạn chưa có cuộc hội thoại nào"}
+                </div>
             ) : (
                 <div className="chatlist-content" ref={listRef}>
-                    {chats.map((item, idx) =>
-                        isSearching ? (
-                            <UserItem
-                                key={idx}
-                                name={item?.username}
-                                avatar={item?.avatar || ""}
-                                chatId={item?.chatId}
-                            />
-                        ) : (
+                    {chats.map((item) => {
+                        if (isSearching) {
+                            return (
+                                <UserItem
+                                    key={item._id}
+                                    name={item?.username}
+                                    avatar={item?.avatar || imgUserDefault}
+                                    chatId={item?.chatId}
+                                />
+                            );
+                        }
+
+                        const otherUser =
+                            item?.type === "private"
+                                ? item?.members?.find((member) => member._id !== user._id)
+                                : null;
+
+                        const isGroup = item?.type === "group";
+
+                        return (
                             <ChatItem
-                                key={idx}
-                                name={item?.name}
-                                email={item?.email}
-                                avatar={item?.avatar}
+                                key={item._id}
+                                name={
+                                    otherUser ? (
+                                        otherUser.username
+                                    ) : (
+                                        <>
+                                            <HiMiniUserGroup style={{ marginRight: 6 }} />
+                                            {item?.name || "Nhóm"}
+                                        </>
+                                    )
+                                }
+                                avatar={
+                                    otherUser
+                                        ? otherUser.avatar || imgUserDefault
+                                        : imgGroupDefault
+                                }
+                                message={
+                                    item?.lastMessage?.content ||
+                                    item?.lastMessage?.fileUrl ||
+                                    "Có tin nhắn mới"
+                                }
+                                sender={item?.lastMessage?.sender?._id}
                                 chatId={item?._id}
                             />
+                        );
+                    })}
 
-                        )
-                    )}
+
                     {isLoading && <div className="loading-state">Đang tải thêm...</div>}
-                    {!hasMore && <div className="end-state">Hết cuộc hội thoại</div>}
+
+                    {!hasMore && !isSearching && !searchValue.trim() && (
+                        <div className="end-state">Đã hết cuộc trò chuyện</div>
+                    )}
+
+                    {searchValue.trim() && !isSearching && (
+                        <div className="search-hint">Nhấn Enter để tìm kiếm người dùng</div>
+                    )}
                 </div>
             )}
         </div>

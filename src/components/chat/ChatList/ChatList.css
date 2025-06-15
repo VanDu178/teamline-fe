@@ -1,43 +1,48 @@
 .chatlist {
   width: 300px;
-  background: var(--background); /* Gradient background */
+  background: var(--background);
   color: var(--text-primary);
   padding: 1rem;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  border-radius: 0.5rem; /* Bo góc */
-  box-shadow: var(--shadow); /* Thêm shadow */
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow);
   transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  overflow: hidden; /* Ngăn tràn nội dung */
+  overflow: hidden;
 }
 
 .chatlist-search {
-  margin-bottom: 1.5rem; /* Khoảng cách lớn hơn */
-  position: relative; /* Để định vị icon */
-  width: 100%; /* Đảm bảo wrapper chiếm toàn bộ chiều rộng */
+  margin-bottom: 1.5rem;
+  position: relative;
+  width: 100%;
 }
 
 .search-input {
-  width: 100%; /* Giữ nguyên chiều rộng 100% trong wrapper */
-  padding: 0.75rem 2.5rem 0.75rem 1rem; /* Thêm padding cho icon */
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
   background-color: var(--input-background);
   color: var(--text-primary);
   border: 1px solid var(--input-background);
   border-radius: 0.5rem;
   font-size: 0.9rem;
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-  box-sizing: border-box; /* Đảm bảo padding không làm tăng chiều rộng */
+  box-sizing: border-box;
 }
 
 .search-input:focus {
   outline: none;
   border-color: var(--link-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); /* Hiệu ứng focus */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background-color: var(--input-background-hover, #fff);
 }
 
 .search-input::placeholder {
   color: var(--text-secondary);
+}
+
+.search-input:hover {
+  background-color: #f9fafb;
 }
 
 .search-icon {
@@ -47,21 +52,37 @@
   transform: translateY(-50%);
   color: var(--text-secondary);
   font-size: 1rem;
-  pointer-events: none; /* Ngăn icon bị nhấp */
+  pointer-events: none;
 }
 
-.search-input:hover {
-  background-color: #f9fafb; /* Nhẹ hơn input-background khi hover */
+/*Nút đóng (close button) khi input được focus */
+.search-close-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+  padding: 0.25rem;
+  border-radius: 50%;
 }
+
+.search-close-btn:hover {
+  color:  #000000; 
+}
+
 
 .chatlist-content {
-  /* height: 50px !important; 
-  flex: none !important;  */
-  flex: 1; 
-  overflow-y: auto; /* Cuộn khi cần */
-  width: 100%; /* Đảm bảo khớp với chiều rộng */
-  scrollbar-width: thin; /* Ẩn scrollbar trên Firefox */
-  scrollbar-color: var(--input-background) transparent; /* Màu scrollbar */
+  flex: 1;
+  overflow-y: auto;
+  width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--input-background) transparent;
+  scroll-behavior: smooth;
 }
 
 .chatlist-content::-webkit-scrollbar {
@@ -77,7 +98,30 @@
   background: transparent;
 }
 
-/* States styling */
+/* Chat item animation */
+.chat-item {
+  transition: background-color 0.2s ease;
+  border-radius: 0.5rem;
+  animation: fadeIn 0.3s ease-in-out both;
+}
+
+.chat-item:hover {
+  background-color: var(--input-background);
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Trạng thái chung */
 .loading-state,
 .error-state,
 .empty-state,
@@ -94,16 +138,26 @@
 }
 
 .loading-state {
-  animation: pulse 1.5s infinite; /* Hiệu ứng nhịp nhàng */
+  animation: pulse 1.5s infinite;
+  font-style: normal;
+  color: var(--link-color);
+  font-weight: 500;
 }
 
 .error-state {
-  background-color: rgba(255, 0, 0, 0.1); /* Nền đỏ nhạt */
+  background-color: rgba(255, 0, 0, 0.1);
   color: #d32f2f;
 }
 
 .empty-state {
-  background-color: rgba(0, 0, 0, 0.05); /* Nền xám nhạt */
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.empty-state::before {
+  content: "";
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.5rem;
 }
 
 .end-state {
@@ -111,7 +165,6 @@
   font-size: 0.9rem;
 }
 
-/* Animation for loading state */
 @keyframes pulse {
   0% {
     opacity: 1;
@@ -124,22 +177,34 @@
   }
 }
 
-/* Responsive adjustments */
+/* Responsive */
 @media (max-width: 767px) {
   .chatlist {
     width: 100%;
-    padding: 0.75rem;
+    padding: 1rem 0.75rem;
     min-height: auto;
-    border-radius: 0; /* Xóa bo góc trên mobile */
+    border-radius: 0;
   }
+
+  .chatlist-content {
+    padding-bottom: 4rem;
+  }
+
   .search-input {
     padding: 0.5rem 2rem 0.5rem 0.75rem;
     font-size: 0.875rem;
   }
+
+  .search-close-btn {
+    right: 0.5rem;
+    font-size: 1rem;
+  }
+
   .search-icon {
     right: 0.5rem;
     font-size: 0.9rem;
   }
+
   .loading-state,
   .error-state,
   .empty-state,
@@ -153,12 +218,13 @@
     width: 250px;
     padding: 0.875rem;
   }
+
   .search-input {
     padding: 0.625rem 2.25rem 0.625rem 0.875rem;
   }
+
+  .search-close-btn,
   .search-icon {
     right: 0.625rem;
   }
 }
-
-
