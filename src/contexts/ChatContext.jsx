@@ -7,6 +7,8 @@ export const ChatProvider = ({ children }) => {
     const [roomId, _setRoomId] = useState('');
     const [toUserId, setToUserId] = useState('');
     const roomIdRef = useRef('');
+    const [chats, setChats] = useState([]);
+    const chatsRef = useRef([]);
 
     // Hàm set đồng bộ cả state và ref
     const setRoomId = (id) => {
@@ -24,6 +26,9 @@ export const ChatProvider = ({ children }) => {
                 roomIdRef,
                 toUserId,
                 setToUserId,
+                chats,
+                setChats,
+                chatsRef
             }}
         >
             {children}

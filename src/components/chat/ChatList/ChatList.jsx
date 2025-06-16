@@ -3,6 +3,7 @@ import { HiMiniUserGroup } from "react-icons/hi2";
 import ChatItem from "../ChatItem/ChatItem";
 import UserItem from "../UserItem/UserItem"
 import { useAuth } from "../../../contexts/AuthContext";
+import { useChat } from "../../../contexts/ChatContext";
 import axiosInstance from "../../../configs/axiosInstance";
 import imgGroupDefault from "../../../assets/images/img-group-default.jpg";
 import imgUserDefault from "../../../assets/images/img-user-default.jpg";
@@ -10,7 +11,8 @@ import imgUserDefault from "../../../assets/images/img-user-default.jpg";
 import "./ChatList.css";
 
 const ChatList = () => {
-    const [chats, setChats] = useState([]);
+    // const [chats, setChats] = useState([]);
+    const { chats, setChats, chatsRef } = useChat();
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [hasMore, setHasMore] = useState(true);
@@ -19,6 +21,7 @@ const ChatList = () => {
     const [searchValue, setSearchValue] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
+
     const { user } = useAuth();
 
     const handleSearch = async () => {
@@ -94,6 +97,7 @@ const ChatList = () => {
     }, []);
 
     useEffect(() => {
+        chatsRef.current = chats;
         const listEl = listRef.current;
         if (!listEl) return;
 

@@ -14,7 +14,7 @@ import "./Main.css";
 
 const Main = () => {
     const { isAuthenticated, userId, user } = useAuth();
-    const { setMessages, roomId, roomIdRef } = useChat();
+    const { setMessages, roomId, roomIdRef, setChats, chatsRef } = useChat();
     const [showChat, setShowChat] = useState(false);
 
 
@@ -33,7 +33,7 @@ const Main = () => {
         if (isAuthenticated) {
             console.log("Kết nối socket khi đăng nhập thành công");
             connectSocket();
-            setChatStore({ setMessages, roomIdRef }); // set store và tự động register luôn ở đây
+            setChatStore({ setMessages, roomIdRef, setChats, chatsRef }); // set store và tự động register luôn ở đây
         }
         return () => {
             disconnectSocket();
