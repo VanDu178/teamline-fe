@@ -71,8 +71,8 @@ const ChatList = () => {
                     ...(before && { before }),
                 },
             });
-
-            const newChats = Array.isArray(res.data)
+            console.log(res?.data)
+            const newChats = Array.isArray(res?.data)
                 ? res.data
                 : res.data?.data || [];
 
@@ -179,10 +179,12 @@ const ChatList = () => {
 
                         const otherUser =
                             item?.type === "private"
-                                ? item?.members?.find((member) => member._id !== user._id)
+                                ? item?.members?.find((member) => member._id.toString() !== user._id.toString())
                                 : null;
 
-                        const isGroup = item?.type === "group";
+                        const readed = item?.lastMessage?.seenBy?.some(
+                            (seenUser) => seenUser._id.toString() === user._id.toString()
+                        );
 
                         return (
                             <ChatItem
@@ -209,6 +211,7 @@ const ChatList = () => {
                                 }
                                 sender={item?.lastMessage?.sender?._id}
                                 chatId={item?._id}
+                                readed={readed}
                             />
                         );
                     })}
