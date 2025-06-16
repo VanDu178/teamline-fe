@@ -46,9 +46,10 @@ export const registerSocketEvents = (socket) => {
   const userId = Cookies.get("userID");
   if (!socket || !chatStore) return;
 
-  const { setMessages, roomIdRef, setChats, chatsRef } = chatStore;
+  const { setMessages, roomIdRef, setChats, chatsRef, setRoomId } = chatStore;
 
   socket.on("received-message", async (msg) => {
+    alert("nhận");
     if (msg.sender === userId) return;
 
     const roomId = roomIdRef?.current;
@@ -121,19 +122,28 @@ export const registerSocketEvents = (socket) => {
       messageId,
       messageContent,
       messageSender,
+      localChatId,
     } = data;
+
+    console.log('localChatId', localChatId);
+    console.log("roomud", roomIdRef?.current);
+    if (localChatId === roomIdRef?.current) {
+      alert("vo day");
+      setRoomId(chatId);
+      return;
+    }
 
     if (status === "saved") {
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
           msg.localId === localId
             ? {
-                ...msg,
-                chat: chatId,
-                createdAt: sentAt,
-                updatedAt: sentAt,
-                _id: messageId,
-              }
+              ...msg,
+              chat: chatId,
+              createdAt: sentAt,
+              updatedAt: sentAt,
+              _id: messageId,
+            }
             : msg
         )
       );

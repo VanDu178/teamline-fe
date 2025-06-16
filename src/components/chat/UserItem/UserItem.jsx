@@ -2,12 +2,29 @@ import React from "react";
 import './UserItem.css';
 import { useChat } from '../../../contexts/ChatContext';
 import { emitSocketEvent } from '../../../configs/socketEmitter';
+import { generateLocalChatId } from '../../../utils/chatIdUtils';
 
-const ChatItem = ({ name, avatar, chatId }) => {
+const ChatItem = ({ name, avatar, userId, chatId }) => {
+    const { roomId, setRoomId, setMessages, setToUserId } = useChat();
+
     const handleClick = () => {
-        console.log("ten", chatId)
+        const localeChatId = generateLocalChatId();
+        //trường hợp chat mới
+        if (chatId === null) {
+            setRoomId(localeChatId);
+            setToUserId(userId);
+            return;
+        }
 
-        alert("File UserItem", chatId)
+        if (roomId === chatId) {
+            return;
+        }
+        if (roomId) {
+            emitSocketEvent('leave-room', { roomId });
+            setMessages([]);
+        }
+
+        setRoomId(chatId);
     }
     return (
         <div className="chat-item" onClick={handleClick}>

@@ -172,6 +172,7 @@ const ChatList = () => {
                                     key={item._id}
                                     name={item?.username}
                                     avatar={item?.avatar || imgUserDefault}
+                                    userId={item?._id}
                                     chatId={item?.chatId}
                                 />
                             );
