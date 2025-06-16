@@ -114,7 +114,6 @@ const ChatBox = () => {
 
     const handleSendMessage = () => {
         const localId = Date.now() + Math.random(); // ID tạm thời duy nhất
-
         if (message && roomId) {
             emitSocketEvent('send-message', { roomId, message, toUserId, localId });
             setMessages((prev) => [
@@ -204,7 +203,7 @@ const ChatBox = () => {
                             </div>
                             <div className="message-time">
                                 {
-                                    msg.createdAt ? (new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                    msg.updatedAt ? (new Date(msg.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                                     ) : (<ClipLoader color="#36d7b7" size={10} />
                                     )
                                 }
