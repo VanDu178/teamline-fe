@@ -11,6 +11,7 @@ const ChatItem = ({ name, time, message, avatar, chatId, sender }) => {
     if (roomId === chatId) {
       return;
     }
+
     if (roomId) {
       emitSocketEvent('leave-room', { roomId });
       setMessages([]);
