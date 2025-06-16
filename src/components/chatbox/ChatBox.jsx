@@ -6,6 +6,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import './ChatBox.css';
 import axiosInstance from '../../configs/axiosInstance';
 import ClipLoader from "react-spinners/ClipLoader";
+import { isLocalChatId } from '../../utils/chatIdUtils';
 
 const ChatBox = () => {
     const { messages, setMessages, roomId, roomIdRef, toUserId, setToUserId } = useChat();
@@ -35,13 +36,13 @@ const ChatBox = () => {
             scrollToBottom(true);
         } else if (currentPage > 1 && chatMessagesRef.current) {
             chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight - scrollHeightBeforeRef.current - 110;
-            //100 bù cho khi tới top còn 100 là load thêm dữ liệu
         }
         setScrollAfterSending(false);
 
     }, [messages]);
 
     const fetchMessages = async (page, isLoadMore = false) => {
+        alert("call fetch");
         try {
             setLoading(true);
             if (isLoadMore && chatMessagesRef.current) {
@@ -67,7 +68,7 @@ const ChatBox = () => {
     };
 
     useEffect(() => {
-        if (roomId) {
+        if (roomId && !isLocalChatId(roomId)) {
             fetchMessages(1);
         }
     }, [roomId]);

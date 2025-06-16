@@ -8,46 +8,35 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useChat } from "../../contexts/ChatContext";
 import { connectSocket, disconnectSocket, registerSocketEvents, setChatStore } from '../../utils/socket';
 import { emitSocketEvent } from '../../configs/socketEmitter';
-
+import { isLocalChatId } from '../../utils/chatIdUtils';
 
 import "./Main.css";
 
 const Main = () => {
-    const { isAuthenticated, userId, user } = useAuth();
-    const { setMessages, roomId, roomIdRef, setChats, chatsRef } = useChat();
+    const { isAuthenticated } = useAuth();
+    const { setMessages, roomId, roomIdRef, setChats, chatsRef, setRoomId } = useChat();
     const [showChat, setShowChat] = useState(false);
-
-
-    // useEffect(() => {
-    //     if (isAuthenticated && userId && user) {
-    //         console.log("Kết nối socket khi đăng nhập thành công");
-    //         connectSocket();
-    //         setChatStore({ setMessages, roomIdRef });
-    //     }
-    //     return () => {
-    //         disconnectSocket();
-    //     };
-    // }, [userId, isAuthenticated, user]);
 
     useEffect(() => {
         if (isAuthenticated) {
-            console.log("Kết nối socket khi đăng nhập thành công");
             connectSocket();
-            setChatStore({ setMessages, roomIdRef, setChats, chatsRef }); // set store và tự động register luôn ở đây
+            setChatStore({ setMessages, roomIdRef, setChats, chatsRef, setRoomId });
+            // set store và tự động register luôn ở đây
         }
         return () => {
             disconnectSocket();
         };
-    }, []);
-
+    }, [isAuthenticated]);
 
     useEffect(() => {
-        if (roomId) {
+        if (isLocalChatId(roomId)) {
+            setMessages([]);
+            setShowChat(true);
+        } else if (roomId) {
             setShowChat(true);
             emitSocketEvent('join-room', { roomId });
         }
     }, [roomId]);
-
 
     return (
         <div className="flex-container">
