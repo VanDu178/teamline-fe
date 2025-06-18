@@ -8,15 +8,16 @@ const ChatItem = ({ name, time, message, avatar, chatId, sender, readed }) => {
   const { roomId, setRoomId, setMessages } = useChat();
   const { user } = useAuth();
   const handleClick = () => {
+    //nếu người dùng đang trong đoạn chat thì không cần làm gì cả.
     if (roomId === chatId) {
       return;
     }
-
+    //nếu không trong chatbox đó + có tồn tại roomId
     if (roomId) {
       emitSocketEvent('leave-room', { roomId });
       setMessages([]);
     }
-
+    //nếu không đang trong chatbox nào + render chatbox lần đầu 
     setRoomId(chatId);
   };
   return (

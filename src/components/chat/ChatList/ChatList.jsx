@@ -7,6 +7,9 @@ import { useChat } from "../../../contexts/ChatContext";
 import axiosInstance from "../../../configs/axiosInstance";
 import imgGroupDefault from "../../../assets/images/img-group-default.jpg";
 import imgUserDefault from "../../../assets/images/img-user-default.jpg";
+import CreateGroupModal from "../../modal/CreateGroupModal/CreateGroupModal";
+import { getSocket } from "../../../utils/socket";
+import { toast } from "react-toastify";
 
 import "./ChatList.css";
 
@@ -21,8 +24,33 @@ const ChatList = () => {
     const [searchValue, setSearchValue] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
-
+    const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
+    const currentSocket = getSocket();
     const { user } = useAuth();
+
+    const handleCreateGroup = async (groupData) => {
+        try {
+            const response = await axiosInstance.post("/chats/create-group", {
+                name: groupData.name,
+                memberIds: groupData.members.map((member) => member._id),
+            });
+
+            const newGroup = response?.data?.group;
+            console.log(newGroup);
+            toast.success("Tạo nhóm thành công!");
+            setChats((prev) => [newGroup, ...prev]);
+
+            //Emit socket để thông báo cho các thành viên được thêm vào nhóm
+            currentSocket.emit("group-created", {
+                newGroup: newGroup
+            });
+
+        } catch (error) {
+            toast.error("Tạo nhóm thất bại!");
+            console.error("Lỗi tạo nhóm:", error);
+        }
+    };
+
 
     const handleSearch = async () => {
         const keyword = searchValue.trim();
@@ -57,21 +85,20 @@ const ChatList = () => {
     const fetchChats = async () => {
         if (isFetchingRef.current || !hasMore || isSearching) return;
 
-        isFetchingRef.current = true;
+        isFetchingRef.current = true; // dùng để phòng tránh trường hợp người dùng scroll xuống đáy nhiều lần gây chạy trùng lặp 
         setError(null);
+        console.log("chay vao fetch chat")
+        //chỉ khi nào load lần đầu mới có trạng thái loading..., lúc scroll thì không cần 
         if (chats.length === 0) setIsLoading(true);
-
         try {
             const lastChat = chats[chats.length - 1];
-            const before = lastChat?.lastMessage?.createdAt;
-
+            const before = lastChat?.timesort;
             const res = await axiosInstance.get("/chats", {
                 params: {
                     limit: 15,
                     ...(before && { before }),
                 },
             });
-            console.log(res?.data)
             const newChats = Array.isArray(res?.data)
                 ? res.data
                 : res.data?.data || [];
@@ -79,6 +106,7 @@ const ChatList = () => {
             setChats((prev) => [...prev, ...newChats]);
 
             if (newChats.length < 15) setHasMore(false);
+
         } catch (err) {
             const retryable = err.response?.data?.retryable;
             setError({
@@ -112,36 +140,44 @@ const ChatList = () => {
         return () => listEl.removeEventListener("scroll", handleScroll);
     }, [chats]);
 
+
     return (
         <div className="chatlist">
-            <div className="chatlist-search">
-                <input
-                    placeholder="Tìm kiếm theo email..."
-                    className="search-input"
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    onFocus={() => {
-                        setIsInputFocused(true);
-                        setChats([]);
-                        setIsSearching(false);
-                    }}
-                    onKeyDown={handleKeyDown}
-                />
-                {isInputFocused && (
-                    <button
-                        className="search-close-btn"
-                        onClick={() => {
-                            setIsInputFocused(false);
-                            setSearchValue("");
-                            setIsSearching(false);
+            <div className="chatlist-header">
+                <div className="chatlist-search">
+                    <input
+                        placeholder="Tìm kiếm theo email..."
+                        className="search-input"
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        onFocus={() => {
+                            setIsInputFocused(true);
                             setChats([]);
-                            setHasMore(true);
-                            fetchChats();
+                            setIsSearching(false);
                         }}
-                    >
-                        ✕
-                    </button>
-                )}
+                        onKeyDown={handleKeyDown}
+                    />
+                    {isInputFocused && (
+                        <button
+                            className="search-close-btn"
+                            onClick={() => {
+                                setIsInputFocused(false);
+                                setSearchValue("");
+                                setIsSearching(false);
+                                setChats([]);
+                                setHasMore(true);
+                                fetchChats();
+                            }}
+                        >
+                            ✕
+                        </button>
+                    )}
+
+                </div>
+                <span className="create-group-icon" onClick={() => setIsCreateGroupModalOpen(true)}>
+                    +
+                    <HiMiniUserGroup />
+                </span>
             </div>
 
             {isLoading && chats.length === 0 ? (
@@ -170,7 +206,7 @@ const ChatList = () => {
                             return (
                                 <UserItem
                                     key={item._id}
-                                    name={item?.username}
+                                    name={item?.name}
                                     avatar={item?.avatar || imgUserDefault}
                                     userId={item?._id}
                                     chatId={item?.chatId}
@@ -192,7 +228,7 @@ const ChatList = () => {
                                 key={item._id}
                                 name={
                                     otherUser ? (
-                                        otherUser.username
+                                        otherUser.name
                                     ) : (
                                         <>
                                             <HiMiniUserGroup style={{ marginRight: 6 }} />
@@ -208,7 +244,7 @@ const ChatList = () => {
                                 message={
                                     item?.lastMessage?.content ||
                                     item?.lastMessage?.fileUrl ||
-                                    "Có tin nhắn mới"
+                                    "Nhóm mới được tạo"
                                 }
                                 sender={item?.lastMessage?.sender?._id}
                                 chatId={item?._id}
@@ -229,7 +265,14 @@ const ChatList = () => {
                     )}
                 </div>
             )}
+            <CreateGroupModal
+                isOpen={isCreateGroupModalOpen}
+                onClose={() => setIsCreateGroupModalOpen(false)}
+                onCreate={handleCreateGroup}
+            />
+
         </div>
+
     );
 };
 

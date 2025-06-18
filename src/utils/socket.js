@@ -49,16 +49,12 @@ export const registerSocketEvents = (socket) => {
   const { setMessages, roomIdRef, setChats, chatsRef, setRoomId } = chatStore;
 
   socket.on("received-message", async (msg) => {
-    alert("nhận");
     if (msg.sender === userId) return;
-
     const roomId = roomIdRef?.current;
-
     // Nếu đang trong phòng chat đó, thêm tin nhắn
     if (msg.chat === roomId) {
       setMessages((prev) => [...prev, msg]);
     }
-
     // Cập nhật danh sách chat
     const chats = chatsRef?.current || [];
     const existingIndex = chats.findIndex((c) => c._id === msg.chat);
@@ -90,29 +86,7 @@ export const registerSocketEvents = (socket) => {
       }
     }
   });
-
-  // socket.on("message-sent", (data) => {
-  //   console.log("Message sent confirmation:", data);
-  //   const { chatId, sentAt, status, localId, messageId } = data;
-
-  //   if (status === "saved") {
-  //     setMessages((prevMessages) =>
-  //       prevMessages.map((msg) =>
-  //         msg.localId === localId
-  //           ? {
-  //               ...msg,
-  //               chat: chatId,
-  //               createdAt: sentAt,
-  //               updatedAt: sentAt,
-  //               _id: messageId,
-  //             }
-  //           : msg
-  //       )
-  //     );
-  //   }
-  // });
-
-  socket.on("message-sent", (data) => {
+  socket.on("message-sent", async (data) => {
     console.log("Message sent confirmation:", data);
     const {
       chatId,
@@ -125,51 +99,58 @@ export const registerSocketEvents = (socket) => {
       localChatId,
     } = data;
 
-    console.log('localChatId', localChatId);
-    console.log("roomud", roomIdRef?.current);
-    if (localChatId === roomIdRef?.current) {
-      alert("vo day");
-      setRoomId(chatId);
-      return;
-    }
-
     if (status === "saved") {
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
           msg.localId === localId
             ? {
-              ...msg,
-              chat: chatId,
-              createdAt: sentAt,
-              updatedAt: sentAt,
-              _id: messageId,
-            }
+                ...msg,
+                chat: chatId,
+                createdAt: sentAt,
+                updatedAt: sentAt,
+                _id: messageId,
+              }
             : msg
         )
       );
 
-      // Cập nhật danh sách chats
-      setChats((prevChats) => {
-        const existing = prevChats.find((c) => c._id === chatId);
-        if (!existing) return prevChats; // nếu không có sẵn, không làm gì
+      // cập nhật danh sách chats
+      const updateChats = async () => {
+        const chats = chatsRef?.current || [];
+        const existing = chats.find((c) => c._id === chatId);
 
-        const updatedChat = {
-          ...existing,
-          lastMessage: {
-            ...existing.lastMessage,
-            content: messageContent, // hoặc lấy từ msg nếu có
-            sender: messageSender, // có thể để userID hoặc gì đó nếu cần
-            createdAt: sentAt,
-          },
-        };
+        if (existing) {
+          const updatedChat = {
+            ...existing,
+            lastMessage: {
+              ...existing.lastMessage,
+              content: messageContent,
+              sender: messageSender,
+              createdAt: sentAt,
+            },
+          };
 
-        // Đưa chat đó lên đầu danh sách
-        const newChats = [
-          updatedChat,
-          ...prevChats.filter((c) => c._id !== chatId),
-        ];
-        return newChats;
-      });
+          const newChats = [
+            updatedChat,
+            ...chats.filter((c) => c._id !== chatId),
+          ];
+
+          setChats(newChats);
+        } else {
+          // Nếu chat chưa tồn tại, fetch từ API
+          try {
+            const res = await axiosInstance.get(`/chats/${chatId}`);
+            const newChat = res.data;
+            if (newChat) {
+              setChats((prev) => [newChat, ...prev]);
+            }
+          } catch (err) {
+            console.error("Không thể fetch chat mới từ message-sent:", err);
+          }
+        }
+      };
+
+      updateChats();
 
       // cập nhật ref nếu có
       if (chatsRef?.current) {
@@ -185,6 +166,15 @@ export const registerSocketEvents = (socket) => {
         chatsRef.current = [updated, ...chatsRef.current];
       }
     }
+  });
+
+  socket.on("group-new", ({ newGroup }) => {
+    const chats = chatsRef?.current || [];
+
+    const exists = chats.some((chat) => chat._id === newGroup._id);
+    if (exists) return;
+
+    setChats((prev) => [newGroup, ...prev]);
   });
 
   socket.on("reaction-added", (data) => {

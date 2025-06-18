@@ -113,9 +113,9 @@ const UserInfor = ({
                     <div className="modal-field">
                         <label>Tên:</label>
                         <input
-                            name="username"
+                            name="name"
                             type="text"
-                            value={editedInfo.username}
+                            value={editedInfo.name}
                             onChange={handleChange}
                             disabled={!isEditable}
                         />
