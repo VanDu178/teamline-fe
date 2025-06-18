@@ -8,6 +8,7 @@ import { ThemeProvider, useTheme } from "../../../contexts/ThemeContext";
 import imgUserDefault from "../../../assets/images/img-user-default.jpg";
 import axiosInstance from "../../../configs/axiosInstance";
 import "./LeftSideBar.css";
+import { useChat } from "../../../contexts/ChatContext";
 
 
 const LeftSideBar = () => {
@@ -15,7 +16,8 @@ const LeftSideBar = () => {
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [activeIcon, setActiveIcon] = useState(null);
-    const { user, setUser, logout } = useAuth();
+    const { user, setUser, setIsAuthenticated, setUserId } = useAuth();
+    const { setChats, chatsRef, setMessages } = useChat();
     const [editedInfo, setEditedInfo] = useState({ ...user });
     const { isDarkMode, toggleTheme } = useTheme();
     const sidebarRef = useRef(null);
@@ -64,7 +66,7 @@ const LeftSideBar = () => {
     const handleSaveChanges = async () => {
         try {
             const formData = new FormData();
-            formData.append("username", editedInfo.username);
+            formData.append("name", editedInfo.name);
             // Nếu là File, gửi lên
             if (editedInfo.avatar instanceof File) {
                 formData.append("avatar", editedInfo.avatar);
@@ -96,6 +98,21 @@ const LeftSideBar = () => {
 
     const handleOpenSettingModal = () => {
         setIsSettingsModalOpen(true);
+    };
+
+
+    //Xu ly logout
+    const logout = async () => {
+        await axiosInstance.post("/auth/logout");
+        setIsAuthenticated(false);
+        setUser(null);
+        setUserId(null);
+        setChats([]);
+        chatsRef.current = [];
+        setMessages([]);
+        Cookies.remove("isLoggedIn");
+        Cookies.remove("userID");
+        Cookies.remove("user");
     };
 
 

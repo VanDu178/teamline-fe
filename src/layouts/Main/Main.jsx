@@ -29,6 +29,7 @@ const Main = () => {
     }, [isAuthenticated]);
 
     useEffect(() => {
+        //Nếu là localChatId thì điều đó có nghĩa đang click vào một cuộc  hội thoại mới
         if (isLocalChatId(roomId)) {
             setMessages([]);
             setShowChat(true);

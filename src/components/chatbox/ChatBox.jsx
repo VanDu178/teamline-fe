@@ -42,7 +42,6 @@ const ChatBox = () => {
     }, [messages]);
 
     const fetchMessages = async (page, isLoadMore = false) => {
-        alert("call fetch");
         try {
             setLoading(true);
             if (isLoadMore && chatMessagesRef.current) {

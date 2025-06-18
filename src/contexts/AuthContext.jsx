@@ -52,18 +52,9 @@ export const AuthProvider = ({ children }) => {
         setUserId(userData._id);
     };
 
-    const logout = async () => {
-        await axiosInstance.post("/auth/logout");
-        setIsAuthenticated(false);
-        setUser(null);
-        setUserId(null);
-        Cookies.remove("isLoggedIn");
-        Cookies.remove("userID");
-        Cookies.remove("user");
-    };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated, loggedIn, logout, isCheckingLogin, userId, setUserId, setUser }}>
+        <AuthContext.Provider value={{ user, isAuthenticated, loggedIn, isCheckingLogin, userId, setUserId, setUser, setIsAuthenticated }}>
             {children}
         </AuthContext.Provider>
     );

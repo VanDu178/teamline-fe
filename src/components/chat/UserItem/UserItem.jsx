@@ -6,7 +6,6 @@ import { generateLocalChatId } from '../../../utils/chatIdUtils';
 
 const ChatItem = ({ name, avatar, userId, chatId }) => {
     const { roomId, setRoomId, setMessages, setToUserId } = useChat();
-
     const handleClick = () => {
         const localeChatId = generateLocalChatId();
         //trường hợp chat mới
@@ -25,6 +24,13 @@ const ChatItem = ({ name, avatar, userId, chatId }) => {
         }
 
         setRoomId(chatId);
+
+        //đang ở ngoai click vào thì có bao nhieu TH 
+
+        // -đang nằm trong chatbox đó luôn -> không cần load tin nhắn cũng không cần làm gì cả-> return 
+        // -đang ở ngoài chatbox đó 
+        // -đã có chat trước đó rồi: -> có chatId -> chỉ cần hiển thị chatbox + load tin nhắn + load reaction
+        // -chưa có chat trước đó: -> chatId = null -> làm gì??? 
     }
     return (
         <div className="chat-item" onClick={handleClick}>
