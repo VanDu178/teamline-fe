@@ -13,7 +13,7 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Thêm state cho confirm password
     const [formData, setFormData] = useState({
-        username: "",
+        name: "",
         email: "",
         password: "",
         confirmPassword: "",
@@ -53,14 +53,14 @@ const Register = () => {
 
         if (isProcessing) return;
         setIsProcessing(true);
-        const { username, email, password } = formData;
+        const { name, email, password } = formData;
         try {
             await axiosInstance.post(
                 "/auth/register",
-                { username, email, password }
+                { name, email, password }
             );
             toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác minh tài khoản");
-            setFormData({ username: "", email: "", password: "", confirmPassword: "" });
+            setFormData({ name: "", email: "", password: "", confirmPassword: "" });
         } catch (err) {
             const msg = err.response?.data?.message || "Đăng ký thất bại";
             if (err.response?.status === 403 && err.response?.data?.err_code === "ACCOUNT_NOT_ACTIVATED") {
@@ -80,11 +80,11 @@ const Register = () => {
             <form>
                 <input
                     type="text"
-                    name="username"
+                    name="name"
                     placeholder="Tên người dùng"
                     className="register-input"
                     required
-                    value={formData.username}
+                    value={formData.name}
                     onChange={handleChange}
                     disabled={isProcessing}
                 />

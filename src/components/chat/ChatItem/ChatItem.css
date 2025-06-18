@@ -38,6 +38,13 @@
   color: var(--text-primary);
 }
 
+.chat-message-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
 .chat-message {
   color: var(--text-secondary);
   white-space: nowrap;
@@ -45,6 +52,20 @@
   text-overflow: ellipsis;
   max-width: 100%; /* Use 100% of available space, adjusted by parent */
 }
+
+
+.chat-message.unread {
+  font-weight: bold;
+  color: #000;
+}
+
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #3ccf4e; /* màu xanh lá cây */
+  border-radius: 50%;
+}
+
 
 .chat-time {
   color: var(--text-secondary);
