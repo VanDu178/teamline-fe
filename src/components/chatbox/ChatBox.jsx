@@ -17,10 +17,13 @@ const ChatBox = () => {
     const [loading, setLoading] = useState(false);
     const [scrollAfterSending, setScrollAfterSending] = useState(false);
     const [lockScroll, setLockScroll] = useState(false);
+    const [replyMessage, setReplyMessage] = useState(null);
+    const [textAreaRows, setTextAreaRows] = useState(1);
 
     const messagesEndRef = useRef(null);
     const scrollHeightBeforeRef = useRef(0);
     const chatMessagesRef = useRef(null);
+    const textareaRef = useRef(null);
 
     const scrollToBottom = (isInstant) => {
         messagesEndRef.current?.scrollIntoView({
@@ -42,7 +45,6 @@ const ChatBox = () => {
     }, [messages]);
 
     const fetchMessages = async (page, isLoadMore = false) => {
-        alert("call fetch");
         try {
             setLoading(true);
             if (isLoadMore && chatMessagesRef.current) {
@@ -50,6 +52,7 @@ const ChatBox = () => {
             }
 
             const res = await axiosInstance.get(`/messages/${roomIdRef?.current}/${page}`);
+            console.log(res);
             if (res.status === 200) {
                 if (isLoadMore) {
                     setMessages((prevMessages) => [...res.data.messages, ...prevMessages]);
@@ -116,7 +119,13 @@ const ChatBox = () => {
     const handleSendMessage = () => {
         const localId = Date.now() + Math.random(); // ID tạm thời duy nhất
         if (message && roomId) {
-            emitSocketEvent('send-message', { roomId, message, toUserId, localId });
+            emitSocketEvent('send-message', {
+                roomId,
+                message,
+                toUserId,
+                localId,
+                replyTo: replyMessage?._id || null
+            });
             setMessages((prev) => [
                 ...prev,
                 {
@@ -128,15 +137,27 @@ const ChatBox = () => {
                     content: message,
                     type: "text",
                     fileUrl: null,
-                    replyTo: null,
+                    replyTo: replyMessage ? {
+                        _id: replyMessage._id,
+                        content: replyMessage.content,
+                        sender: {
+                            _id: replyMessage.sender._id,
+                            name: replyMessage.sender.name
+                        }
+                    } : null,
                     reactions: [],
                     seenBy: [],
-                    chat: roomId,
+                    chat: {
+                        _id: roomId,
+                        type: "private" // nếu là nhóm thì bạn gán "group"
+                    },
                     createdAt: null,
                     updatedAt: null
                 },
             ]);
             setMessage('');
+            setReplyMessage(null); // Xóa tin nhắn reply sau khi gửi
+            setTextAreaRows(1); // Reset số dòng textarea
             setScrollAfterSending(true);
         } else {
             alert('Vui lòng nhập tin nhắn và ID người nhận');
@@ -146,15 +167,26 @@ const ChatBox = () => {
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
             if (e.shiftKey) {
-                // Nếu nhấn Shift + Enter thì cho phép xuống dòng
+                // Tăng số dòng nhưng không quá 3 lần
+                if (textAreaRows < 3) {
+                    setTextAreaRows(prev => prev + 1);
+                }
                 return;
             } else {
-                // Nếu chỉ nhấn Enter thì gửi tin nhắn
-                e.preventDefault(); // Ngăn xuống dòng (nếu đang dùng textarea)
+                e.preventDefault();
                 handleSendMessage();
             }
         }
-    }
+    };
+
+    const handleReply = (message) => {
+        setReplyMessage(message);
+        textareaRef.current.focus(); // Tập trung vào textarea
+    };
+
+    const cancelReply = () => {
+        setReplyMessage(null);
+    };
 
     return (
         <div className="chat-container">
@@ -193,7 +225,45 @@ const ChatBox = () => {
                         key={msg._id || msg.localId}
                         className={`message-container ${msg?.sender?._id === userId ? 'sent' : 'received'}`}
                     >
+                        {/* Hiển thị tin nhắn được reply (nếu có) */}
+                        {msg.replyTo && (
+                            <div className="reply-preview">
+                                <div className="reply-sender">
+                                    {msg.replyTo.sender
+                                        ? (msg.replyTo.sender._id === userId ? "Bạn" : msg.replyTo.sender.name)
+                                        : "Đang tải..."
+                                    }
+                                </div>
+                                <div className="reply-content">
+                                    {msg.replyTo.content?.length > 50
+                                        ? `${msg.replyTo.content.substring(0, 50)}...`
+                                        : msg.replyTo.content
+                                    }
+                                </div>
+                            </div>
+                        )}
+                        <div className="message-actions">
+                            <button
+                                className="action-btn"
+                                title="Trả lời"
+                                onClick={() => handleReply(msg)}
+                            >
+                                <i className="fas fa-reply"></i>
+                            </button>
+                            <button className="action-btn" title="Chuyển tiếp">
+                                <i className="fas fa-share"></i>
+                            </button>
+                            <button className="action-btn" title="Khác">
+                                <i className="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
                         <div className="message-content">
+                            {
+                                msg?.chat?.type != 'private' && msg?.sender?._id != userId &&
+                                (
+                                    <div className='message-name'>{msg?.sender.name}</div>
+                                )
+                            }
                             <div className="message-text">
                                 {msg?.content?.split('\n')?.map((line, index) => (
                                     <React.Fragment key={index}>
@@ -203,11 +273,15 @@ const ChatBox = () => {
                                 ))}
                             </div>
                             <div className="message-time">
-                                {
-                                    msg.updatedAt ? (new Date(msg.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                    ) : (<ClipLoader color="#36d7b7" size={10} />
+                                {msg.hasOwnProperty('updatedAt') ? (
+                                    msg.updatedAt ? (
+                                        new Date(msg.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                    ) : (
+                                        <ClipLoader color="#36d7b7" size={10} />
                                     )
-                                }
+                                ) : (
+                                    <span style={{ color: 'red' }}>! gửi lỗi</span>
+                                )}
                             </div>
                         </div>
 
@@ -242,6 +316,24 @@ const ChatBox = () => {
                 />
             </div>
 
+            {replyMessage && (
+                <div className="reply-preview-container">
+                    <div className="reply-preview-content">
+                        <div className="reply-preview-header">
+                            <span>Trả lời {replyMessage.sender._id === userId ? "bạn" : replyMessage.sender.name}</span>
+                            <button className="cancel-reply-btn" onClick={cancelReply}>
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div className="reply-preview-text">
+                            {replyMessage.content.length > 50
+                                ? `${replyMessage.content.substring(0, 50)}...`
+                                : replyMessage.content}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="chat-input-container">
                 <div className="input-tools">
                     <button className="tool-btn">
@@ -256,11 +348,13 @@ const ChatBox = () => {
                 </div>
                 <div className="input-message-wrapper">
                     <textarea
+                        ref={textareaRef}
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         onKeyDown={handleKeyPress}
                         placeholder="Nhập tin nhắn..."
                         className="input-message"
+                        rows={textAreaRows}
                     />
                 </div>
                 <button

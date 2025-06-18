@@ -49,7 +49,6 @@ export const registerSocketEvents = (socket) => {
   const { setMessages, roomIdRef, setChats, chatsRef, setRoomId } = chatStore;
 
   socket.on("received-message", async (msg) => {
-    alert("nhận");
     if (msg.sender === userId) return;
 
     const roomId = roomIdRef?.current;
@@ -125,10 +124,7 @@ export const registerSocketEvents = (socket) => {
       localChatId,
     } = data;
 
-    console.log('localChatId', localChatId);
-    console.log("roomud", roomIdRef?.current);
     if (localChatId === roomIdRef?.current) {
-      alert("vo day");
       setRoomId(chatId);
       return;
     }
@@ -216,6 +212,23 @@ export const registerSocketEvents = (socket) => {
     console.error("Server error:", message);
     alert(`Lỗi: ${message}`);
   });
+
+  socket.on("send-error", ({ message, localId }) => {
+    console.error("Send error:", message);
+
+    // Cập nhật lại message, xóa trường updatedAt
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg.localId === localId
+          ? (() => {
+            const { updatedAt, ...rest } = msg; // Xóa updatedAt
+            return rest;
+          })()
+          : msg
+      )
+    );
+  });
+
 };
 
 export const getSocket = () => {

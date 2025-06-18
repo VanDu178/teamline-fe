@@ -6,6 +6,7 @@ import {
 } from "../utils/socket"; // Thêm registerSocketEvents
 import axiosInstance from "../configs/axiosInstance";
 import Cookies from "js-cookie";
+import { joinRoomFunction } from '../layouts/Main/Main';
 
 let pendingEvent = null;
 let isRefreshing = false;
@@ -49,8 +50,17 @@ export const handleTokenExpired = async () => {
         if (pendingEvent) {
           console.log("Resending last event:", pendingEvent.event);
           newSocket.emit(pendingEvent.event, pendingEvent.data);
+          //nếu sự kiện bị chặn do token hết hạn trước đó là join room thì không cần join nữa
+          if (pendingEvent.event != 'join-room') {
+            joinRoomFunction();
+          }
           pendingEvent = null;
         }
+        else {
+          // Không có pending thì vẫn phải join lại room
+          joinRoomFunction();
+        }
+
         // Đăng ký lại các sự kiện, vì socket là một instance nên khi ngắt kết nối và tạo token mới thì
         //lúc đó các sự kiện đăng kí lúc đầu không còn nữa
         registerSocketEvents(newSocket);
