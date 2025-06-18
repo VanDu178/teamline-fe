@@ -49,15 +49,16 @@ export const registerSocketEvents = (socket) => {
   const { setMessages, roomIdRef, setChats, chatsRef, setRoomId } = chatStore;
 
   socket.on("received-message", async (msg) => {
+    console.log('msg', msg);
     if (msg.sender === userId) return;
     const roomId = roomIdRef?.current;
     // Nếu đang trong phòng chat đó, thêm tin nhắn
-    if (msg.chat === roomId) {
+    if (msg?.chat?._id === roomId) {
       setMessages((prev) => [...prev, msg]);
     }
     // Cập nhật danh sách chat
     const chats = chatsRef?.current || [];
-    const existingIndex = chats.findIndex((c) => c._id === msg.chat);
+    const existingIndex = chats.findIndex((c) => c._id === msg?.chat?._id);
 
     if (existingIndex !== -1) {
       // Đã có: cập nhật lastMessage và đẩy lên đầu
@@ -76,7 +77,7 @@ export const registerSocketEvents = (socket) => {
     } else {
       // Chưa có: fetch chat từ API và thêm vào đầu
       try {
-        const res = await axiosInstance.get(`/chats/${msg.chat}`);
+        const res = await axiosInstance.get(`/chats/${msg?.chat?._id}`);
         const newChat = res.data;
         if (newChat) {
           setChats((prev) => [newChat, ...prev]);
@@ -86,6 +87,7 @@ export const registerSocketEvents = (socket) => {
       }
     }
   });
+
   socket.on("message-sent", async (data) => {
     console.log("Message sent confirmation:", data);
     const {
