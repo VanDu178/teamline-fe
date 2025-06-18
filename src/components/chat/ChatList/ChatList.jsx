@@ -253,7 +253,6 @@ const ChatList = () => {
                         );
                     })}
 
-
                     {isLoading && <div className="loading-state">Đang tải thêm...</div>}
 
                     {!hasMore && !isSearching && !searchValue.trim() && (

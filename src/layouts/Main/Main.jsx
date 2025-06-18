@@ -12,10 +12,23 @@ import { isLocalChatId } from '../../utils/chatIdUtils';
 
 import "./Main.css";
 
+export let joinRoomFunction = null;
+
 const Main = () => {
     const { isAuthenticated } = useAuth();
     const { setMessages, roomId, roomIdRef, setChats, chatsRef, setRoomId } = useChat();
     const [showChat, setShowChat] = useState(false);
+
+    const joinRoom = () => {
+        if (!isLocalChatId(roomId) && roomId) {
+            emitSocketEvent('join-room', { roomId });
+            return true;
+        } else {
+            return false;
+        }
+    };
+    // Gán function vào biến toàn cục để file khác có thể import
+    joinRoomFunction = joinRoom;
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -35,7 +48,8 @@ const Main = () => {
             setShowChat(true);
         } else if (roomId) {
             setShowChat(true);
-            emitSocketEvent('join-room', { roomId });
+            joinRoom();
+            // emitSocketEvent('join-room', { roomId });
         }
     }, [roomId]);
 
