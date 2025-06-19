@@ -87,9 +87,11 @@
   flex-direction: column;
   overflow-y: auto;
   height: 100%;
+  scrollbar-gutter: stable; /* Dành chỗ cho scrollbar ngay cả khi ẩn */
+  overflow-y: auto; /* Cho phép cuộn theo mặc định */
 }
 
-.date-divider {
+/* .date-divider {
   text-align: center;
   margin: 10px 0;
 }
@@ -101,7 +103,7 @@
   padding: 4px 12px;
   border-radius: 20px;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
-}
+} */
 
 .message-container {
   position: relative;
@@ -249,20 +251,16 @@
 
 /* Scrollbar */
 .chat-messages::-webkit-scrollbar {
-  width: 6px;
+  width: 8px; /* Độ rộng của thanh scroll */
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background-color: var(--background-tertiary); /* Màu nền*/
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+    background-color: #d4d4d4; /*Màu thanh scroll*/
+    border-radius: 5px; /* Bo góc */
 }
 
 /* Nút tim cơ bản */
@@ -292,11 +290,6 @@
   opacity: 1;
   visibility: visible;
 }
-
-/* Hiệu ứng hover cho nút */
-/* .heart-btn:hover {
-  transform: scale(1.1);
-} */
 
 /* Trạng thái khi đã thả tim */
 .heart-btn.reacted {
@@ -338,7 +331,7 @@
 /* Message actions container */
 .message-actions {
   position: absolute;
-  top: 80%;
+  bottom: 0%;
   transform: translateY(-50%);
   opacity: 0;
   visibility: hidden;
@@ -497,4 +490,95 @@
     padding-top: 8px;
     padding-bottom: 8px;
     transition: height 0.2s ease;
+}
+
+.date-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 15px 0;
+  position: relative;
+}
+
+.date-divider::before,
+.date-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.date-divider span {
+  padding: 0 10px;
+  font-size: 12px;
+  color: #888;
+  background-color: #f5f5f5;
+  border-radius: 15px;
+  position: relative;
+}
+/*css menu */
+.context-menu {
+  position: fixed;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  min-width: 200px;
+  padding: 5px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Thêm mũi tên chỉ vị trí */
+.context-menu::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 15px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid white;
+  filter: drop-shadow(0 -2px 1px rgba(0, 0, 0, 0.1));
+}
+
+/* Đối với tin nhắn của mình (menu bên trái) */
+.context-menu.own-message::before {
+  right: auto;
+  left: 15px;
+}
+
+.context-menu-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.context-menu-item:hover {
+  background-color: #f5f5f5;
+}
+
+.context-menu-item i {
+  margin-right: 10px;
+  width: 20px;
+  text-align: center;
+}
+
+.context-menu-divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 5px 0;
+}
+
+.chat-messages.no-scroll {
+    overflow-y: hidden; /* Ngăn cuộn khi context menu mở */
+}
+
+/* Thêm media query cho màn hình nhỏ */
+@media (max-height: 600px) {
+  .context-menu {
+    max-height: 200px;
+  }
 }
