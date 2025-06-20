@@ -3,7 +3,8 @@
   --background: #fff;
   --background-secondary:#005adf;
   --background-tertiary: #ebecf0;
-  --background-hover: #e8eaee; 
+  --background-hover:#0250c6;
+  --background-hover-secondary:#fff;
   --background-sendtext:#e5f1ff;
   --card-background: #f7f7f7;
   --text-primary: #1f2937;
@@ -14,10 +15,7 @@
   --link-color: #3b82f6;
   --link-hover: #60a5fa;
   --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-
-  
-
-
+  --border-color-primary:#1f2937;
 }
   /* Dark mode */
 [data-theme="dark"] {
@@ -25,8 +23,8 @@
   --background-secondary: #131416;
   --background-tertiary:#16191e;
   --background-hover:#374151;
- --background-sendtext:#1c354e;
-
+  --background-hover-secondary:#374151;
+  --background-sendtext:#1c354e;
   --card-background: rgba(47, 55, 72, 0.9);
   --text-primary: #e2e8f0;
   --text-secondary: #a0aec0;
@@ -36,6 +34,7 @@
   --link-color: #60a5fa;
   --link-hover: #93c5fd;
   --shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  --border-color-primary:#e2e8f0;
 }
 
 /* Global styles using variables */
