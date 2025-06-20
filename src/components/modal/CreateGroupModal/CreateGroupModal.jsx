@@ -3,12 +3,13 @@ import { HiMiniUserGroup } from "react-icons/hi2";
 import imgUserDefault from "../../../assets/images/img-user-default.jpg";
 import { toast } from "react-toastify";
 import axiosInstance from "../../../configs/axiosInstance";
+import { emailValidator } from "../../../utils/validation";
 import "./CreateGroupModal.css";
 
 const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
     const [groupName, setGroupName] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedMemberIds, setSelectedMemberIds] = useState(new Set());
+    const [selectedUsers, setSelectedUsers] = useState(new Map());
     const [users, setUsers] = useState([]);
     const [cursor, setCursor] = useState(null);
     const [hasMore, setHasMore] = useState(true);
@@ -40,8 +41,35 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
         return () => element.removeEventListener("scroll", handleScroll);
     }, [cursor, hasMore, isLoading]);
 
+    useEffect(() => {
+        const delayDebounce = setTimeout(() => {
+            if (searchQuery.trim() === "" && isOpen) {
+                fetchUsers(null);
+            } else if (emailValidator(searchQuery.trim())) {
+                searchUsers(searchQuery.trim());
+            }
+        }, 500);
+
+        return () => clearTimeout(delayDebounce);
+    }, [searchQuery]);
+
+    const searchUsers = async (query) => {
+        setIsLoading(true);
+        try {
+            const res = await axiosInstance.get(`/users/${query}`);
+            const fetchedUsers = [res.data?.user].filter(Boolean);
+            setUsers(fetchedUsers);
+            setHasMore(true);
+        } catch (err) {
+            setUsers([]);
+            console.error("Search users error:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const fetchUsers = async (cursorId = null) => {
-        if (isLoading || !hasMore) return; //không load nếu đang có lệnh load trước đó hoặc không con dữ liệu
+        if (isLoading || !hasMore) return;
         setIsLoading(true);
         try {
             const res = await axiosInstance.get("/users/connected-users", {
@@ -62,14 +90,20 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
         }
     };
 
-    const handleToggleMember = (userId) => {
-        const newSelected = new Set(selectedMemberIds);
-        newSelected.has(userId) ? newSelected.delete(userId) : newSelected.add(userId);
-        setSelectedMemberIds(newSelected);
+    const handleToggleMember = (user) => {
+        setSelectedUsers((prev) => {
+            const newMap = new Map(prev);
+            if (newMap.has(user._id)) {
+                newMap.delete(user._id);
+            } else {
+                newMap.set(user._id, user);
+            }
+            return newMap;
+        });
     };
 
     const handleCreateGroup = () => {
-        const members = users.filter((u) => selectedMemberIds.has(u._id));
+        const members = Array.from(selectedUsers.values());
         if (!groupName.trim()) {
             toast.error("Tên nhóm không được để trống");
             return;
@@ -87,10 +121,11 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
 
     const resetModal = () => {
         setGroupName("");
-        setSelectedMemberIds(new Set());
+        setSelectedUsers(new Map());
         setUsers([]);
         setCursor(null);
         setHasMore(true);
+        setSearchQuery("");
     };
 
     const handleClose = () => {
@@ -98,8 +133,12 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
         onClose();
     };
 
-
     if (!isOpen) return null;
+
+    // Merge `users` và `selectedUsers` để luôn render user đã chọn
+    const displayedUsers = Array.from(
+        new Map([...users.map((u) => [u._id, u]), ...selectedUsers]).values()
+    );
 
     return (
         <div className="cgm-modal-overlay" onClick={handleClose}>
@@ -122,10 +161,8 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
                         <input
                             type="text"
                             value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                            }}
-                            placeholder="Nhập tên, số điện thoại, hoặc email..."
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Nhập email để tìm người dùng ..."
                         />
                         <span className="cgm-search-icon">🔍</span>
                     </div>
@@ -134,46 +171,40 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
                             {isLoading && users.length === 0 && (
                                 <p>Đang tải danh sách người dùng...</p>
                             )}
-
                             {users.map((user) => (
                                 <div
                                     key={user._id}
                                     className="cgm-member-item"
-                                    onClick={() => handleToggleMember(user._id)}
+                                    onClick={() => handleToggleMember(user)}
                                 >
                                     <input
                                         type="checkbox"
-                                        checked={selectedMemberIds.has(user._id)}
+                                        checked={selectedUsers.has(user._id)}
                                         readOnly
                                     />
                                     <img src={user.avatar || imgUserDefault} alt={user.name} />
                                     <span>{user.name}</span>
                                 </div>
                             ))}
-
                             {isLoading && users.length > 0 && (
                                 <p style={{ textAlign: "center", marginTop: 10 }}>Đang tải thêm...</p>
                             )}
-
                             {!hasMore && users.length > 0 && (
                                 <p style={{ textAlign: "center", marginTop: 10 }}>Đã hết người dùng</p>
                             )}
+                            {!isLoading && displayedUsers.length === 0 && (
+                                <p style={{ textAlign: "center", marginTop: 10 }}>Không tìm thấy người dùng</p>
+                            )}
                         </div>
-
                         <div className="cgm-selected-members">
-                            <h3>Đã chọn: {selectedMemberIds.size}/100</h3>
-                            {Array.from(selectedMemberIds).map((userId) => {
-                                const user = users.find((u) => u._id === userId);
-                                return (
-                                    user && (
-                                        <div key={user._id} className="cgm-selected-member">
-                                            <img src={user.avatar || imgUserDefault} alt={user.name} />
-                                            <span>{user.name}</span>
-                                            <button onClick={() => handleToggleMember(user._id)}>×</button>
-                                        </div>
-                                    )
-                                );
-                            })}
+                            <h3>Đã chọn: {selectedUsers.size}/100</h3>
+                            {Array.from(selectedUsers.values()).map((user) => (
+                                <div key={user._id} className="cgm-selected-member">
+                                    <img src={user.avatar || imgUserDefault} alt={user.name} />
+                                    <span>{user.name}</span>
+                                    <button onClick={() => handleToggleMember(user)}>×</button>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

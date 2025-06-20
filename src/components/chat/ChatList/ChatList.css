@@ -103,6 +103,7 @@
 }
 
 .chatlist-content {
+  margin-top: 10px;
   flex: 1;
   overflow-y: auto;
   width: 100%;
@@ -161,6 +162,7 @@
   text-align: center;
   padding: 1rem;
   border-radius: 0.25rem;
+  margin-top:10px;
 }
 
 .loading-state {

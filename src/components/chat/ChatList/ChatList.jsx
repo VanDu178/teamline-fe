@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { HiMiniUserGroup } from "react-icons/hi2";
+import { HiArrowTurnUpLeft, HiMiniUserGroup } from "react-icons/hi2";
 import ChatItem from "../ChatItem/ChatItem";
 import UserItem from "../UserItem/UserItem"
 import { useAuth } from "../../../contexts/AuthContext";
@@ -10,12 +10,10 @@ import imgUserDefault from "../../../assets/images/img-user-default.jpg";
 import CreateGroupModal from "../../modal/CreateGroupModal/CreateGroupModal";
 import { getSocket } from "../../../utils/socket";
 import { toast } from "react-toastify";
-
 import "./ChatList.css";
 
 const ChatList = () => {
-    // const [chats, setChats] = useState([]);
-    const { chats, setChats, chatsRef } = useChat();
+    const { chats, setChats, chatsRef, isSearchingRef } = useChat();
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [hasMore, setHasMore] = useState(true);
@@ -28,6 +26,19 @@ const ChatList = () => {
     const currentSocket = getSocket();
     const { user } = useAuth();
 
+
+    useEffect(() => {
+        isSearchingRef.current = isInputFocused;
+    }, [isInputFocused])
+
+    const handleOpenCreateGroup = () => {
+        setIsCreateGroupModalOpen(true);
+        setIsInputFocused(false);
+        setChats([]);
+        setHasMore(true);
+        setSearchValue("");
+        fetchChats();
+    }
     const handleCreateGroup = async (groupData) => {
         try {
             const response = await axiosInstance.post("/chats/create-group", {
@@ -63,13 +74,10 @@ const ChatList = () => {
         try {
             const res = await axiosInstance.get(`/users/${keyword}`)
             const user = res?.data?.user;
+            console.log("thong tin user", res)
             setChats(user ? [{ ...user, chatId: res?.data?.chatId }] : []);
             setHasMore(false);
         } catch (err) {
-            setError({
-                message: "Không tìm thấy người dùng với email đó.",
-                retryable: false,
-            });
             setChats([]);
         } finally {
             setIsLoading(false);
@@ -84,10 +92,8 @@ const ChatList = () => {
 
     const fetchChats = async () => {
         if (isFetchingRef.current || !hasMore || isSearching) return;
-
         isFetchingRef.current = true; // dùng để phòng tránh trường hợp người dùng scroll xuống đáy nhiều lần gây chạy trùng lặp 
         setError(null);
-        console.log("chay vao fetch chat")
         //chỉ khi nào load lần đầu mới có trạng thái loading..., lúc scroll thì không cần 
         if (chats.length === 0) setIsLoading(true);
         try {
@@ -108,12 +114,19 @@ const ChatList = () => {
             if (newChats.length < 15) setHasMore(false);
 
         } catch (err) {
-            const retryable = err.response?.data?.retryable;
-            setError({
-                message: "Đã xảy ra lỗi khi tải danh sách chat.",
-                retryable,
-            });
-            console.error("Lỗi khi tải chats:", err);
+            if (err.code === "ERR_NETWORK") {
+                setError({
+                    message: "Đã xảy ra lỗi khi tải danh sách chat.",
+                    retryAble: true,
+                });
+            }
+            else {
+                const retryAble = err.response?.data?.retryAble;
+                setError({
+                    message: "Đã xảy ra lỗi khi tải danh sách chat.",
+                    retryAble,
+                });
+            }
         } finally {
             setIsLoading(false);
             isFetchingRef.current = false;
@@ -162,10 +175,9 @@ const ChatList = () => {
                             className="search-close-btn"
                             onClick={() => {
                                 setIsInputFocused(false);
-                                setSearchValue("");
-                                setIsSearching(false);
                                 setChats([]);
                                 setHasMore(true);
+                                setSearchValue("");
                                 fetchChats();
                             }}
                         >
@@ -174,7 +186,7 @@ const ChatList = () => {
                     )}
 
                 </div>
-                <span className="create-group-icon" onClick={() => setIsCreateGroupModalOpen(true)}>
+                <span className="create-group-icon" onClick={handleOpenCreateGroup}>
                     +
                     <HiMiniUserGroup />
                 </span>
@@ -184,7 +196,7 @@ const ChatList = () => {
                 <div className="loading-state">Đang tải...</div>
             ) : error ? (
                 <div className="error-state">
-                    {error.retryable ? (
+                    {error.retryAble ? (
                         <>
                             <div>Đã xảy ra lỗi, hãy thử lại.</div>
                             <button onClick={fetchChats}>Thử lại</button>
@@ -196,9 +208,13 @@ const ChatList = () => {
             ) : chats.length === 0 ? (
                 <div className="empty-state">
                     {isSearching
-                        ? "Không tìm thấy người dùng nào."
-                        : "Bạn chưa có cuộc hội thoại nào"}
+                        ? "Không tìm thấy kết quả"
+                        : searchValue.trim() && !isSearching
+                            ? "Nhấn Enter để tìm kiếm người dùng"
+                            : "Bạn chưa có cuộc hội thoại nào"}
                 </div>
+
+
             ) : (
                 <div className="chatlist-content" ref={listRef}>
                     {chats.map((item) => {
@@ -219,6 +235,7 @@ const ChatList = () => {
                                 ? item?.members?.find((member) => member._id.toString() !== user._id.toString())
                                 : null;
 
+
                         const readed = item?.lastMessage?.seenBy?.some(
                             (seenUser) => seenUser._id.toString() === user._id.toString()
                         );
@@ -238,9 +255,12 @@ const ChatList = () => {
                                 }
                                 avatar={
                                     otherUser
-                                        ? otherUser.avatar || imgUserDefault
+                                        ? otherUser.avatar && otherUser.avatar.trim() !== ""
+                                            ? otherUser.avatar
+                                            : imgUserDefault
                                         : imgGroupDefault
                                 }
+
                                 message={
                                     item?.lastMessage?.content ||
                                     item?.lastMessage?.fileUrl ||

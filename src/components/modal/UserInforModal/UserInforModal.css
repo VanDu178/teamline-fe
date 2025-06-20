@@ -181,6 +181,15 @@
   background-color: #c0392b;
 }
 
+
+.error-message {
+    color: red;
+    font-size: 0.875rem;
+    margin-top: 4px;
+    display: block;
+    height: 1rem;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;

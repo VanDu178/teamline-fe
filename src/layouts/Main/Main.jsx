@@ -16,7 +16,7 @@ export let joinRoomFunction = null;
 
 const Main = () => {
     const { isAuthenticated } = useAuth();
-    const { setMessages, roomId, roomIdRef, setChats, chatsRef, setRoomId } = useChat();
+    const { setMessages, roomId, roomIdRef, setChats, chatsRef, setRoomId, isSearchingRef } = useChat();
     const [showChat, setShowChat] = useState(false);
 
     const joinRoom = () => {
@@ -33,7 +33,7 @@ const Main = () => {
     useEffect(() => {
         if (isAuthenticated) {
             connectSocket();
-            setChatStore({ setMessages, roomIdRef, setChats, chatsRef, setRoomId });
+            setChatStore({ setMessages, roomIdRef, setChats, chatsRef, setRoomId, isSearchingRef });
             // set store và tự động register luôn ở đây
         }
         return () => {

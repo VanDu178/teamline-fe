@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../configs/axiosInstance";
-import { emailValidator } from "../../helpers/validation";
+import { emailValidator } from "../../utils/validation";
 import { toast } from 'react-toastify';
 import "../../styles/resend-link-active.css"
 
