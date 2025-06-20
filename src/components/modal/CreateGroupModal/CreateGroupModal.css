@@ -232,6 +232,14 @@
   background-color: #2563eb;
 }
 
+.cgm-input-error {
+    border: 1px solid red !important;
+    background-color: #ffecec;
+}
+.cgm-input-error:focus {
+    border: 1px solid red !important;
+    outline: none;
+}
 
 
 @media (max-width: 767px) {
