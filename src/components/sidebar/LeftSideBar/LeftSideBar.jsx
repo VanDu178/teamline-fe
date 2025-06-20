@@ -49,6 +49,7 @@ const LeftSideBar = () => {
 
     //UserInfoModal
     const handleOpenUserInfoModal = () => {
+        console.log("user", user);
         setIsUserInfoModalOpen(true);
         setIsAvataOpen(false);
         setActiveIcon(null);

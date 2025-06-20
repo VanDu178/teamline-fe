@@ -97,10 +97,11 @@ export const registerSocketEvents = (socket) => {
   };
 
   socket.on("received-message", async (msg) => {
+    console.log("msg", msg);
     if (msg.sender === userId) return;
     const roomId = roomIdRef?.current;
     // Nếu đang trong phòng chat đó, thêm tin nhắn
-    if (msg.chat === roomId) {
+    if (msg?.chat?._id === roomId) {
       setMessages((prev) => [...prev, msg]);
     }
     await updateChatList({
@@ -110,6 +111,7 @@ export const registerSocketEvents = (socket) => {
       setChats,
     });
   });
+
   socket.on("message-sent", async (data) => {
     console.log("Message sent confirmation:", data);
     const {
