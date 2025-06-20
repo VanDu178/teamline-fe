@@ -1,37 +1,81 @@
 import { useState, useEffect, useMemo } from "react";
 import imgUserDefault from "../../../assets/images/img-user-default.jpg";
+import axiosInstance from "../../../configs/axiosInstance";
+import { toast } from 'react-toastify';
+import Cookies from "js-cookie";
+import { useAuth } from "../../../contexts/AuthContext";
 import "./UserInforModal.css";
 
-const UserInfor = ({
-    isOpen,
-    onClose,
-    onSave,
-    onChange,
-    editedInfo,
-    setEditedInfo,
-    isEditable = false,
-}) => {
+const UserInfor = ({ isOpen, setIsUserInfoModalOpen }) => {
     const [avatarObjectUrl, setAvatarObjectUrl] = useState(null);
+    const [errors, setErrors] = useState({});
+    const [isProcessing, setIsProcessing] = useState(false);
+    const { user, setUser } = useAuth();
+    const [editedInfo, setEditedInfo] = useState({ ...user });
+
+
+    const handleSaveChanges = async () => {
+        try {
+            if (isProcessing) return;
+            setIsProcessing(true)
+            const formData = new FormData();
+            formData.append("name", editedInfo.name);
+            // Nếu là File, gửi lên
+            if (editedInfo.avatar instanceof File) {
+                formData.append("avatar", editedInfo.avatar);
+            }
+            // Nếu người dùng đã xoá avatar (rỗng chuỗi), báo backend
+            if (editedInfo.avatar === "") {
+                formData.append("removeAvatar", "true");
+            }
+            // Gửi formData bằng Axios
+            const response = await axiosInstance.put(`/users/${user._id}`, formData);
+            const updatedUser = response.data?.user;
+            setUser(updatedUser);
+            setIsUserInfoModalOpen(false);
+            toast.success("Cập nhật thông tin thành công");
+            Cookies.set("user", JSON.stringify(updatedUser), { expires: 365 });
+        } catch (error) {
+            console.error("Lỗi cập nhật:", error);
+        }
+        finally {
+            setIsProcessing(false)
+        }
+    };
+
+
+
+    const handleCancel = () => {
+        setIsUserInfoModalOpen(false);
+        setErrors(false)
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        const updated = { ...editedInfo, [name]: value };
+        const updated = { ...editedInfo, [name]: value.trimStart() };
         setEditedInfo(updated);
-        onChange?.(updated);
+
+        if (name === "name") {
+            if (!value.trim()) {
+                setErrors((prev) => ({ ...prev, name: "Tên không được để trống" }));
+            } else {
+                setErrors((prev) => {
+                    const newErrors = { ...prev };
+                    delete newErrors.name;
+                    return newErrors;
+                });
+            }
+        }
     };
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
-        if (!file) return; // 👈 Người dùng không chọn file, bỏ qua
+        if (!file) return;
 
         setEditedInfo((prev) => ({
             ...prev,
             avatar: file,
         }));
-        onChange?.({
-            ...editedInfo,
-            avatar: file,
-        });
     };
 
     const handleDeleteImage = () => {
@@ -39,40 +83,35 @@ const UserInfor = ({
             ...prev,
             avatar: "",
         }));
-        onChange?.({
-            ...editedInfo,
-            avatar: "",
-        });
     };
 
-    // Preview ảnh đúng cách + cleanup object URL
-    const previewUrl = useMemo(() => {
+    useEffect(() => {
         if (editedInfo.avatar instanceof File) {
             const objectUrl = URL.createObjectURL(editedInfo.avatar);
             setAvatarObjectUrl(objectUrl);
-            return objectUrl;
+            return () => URL.revokeObjectURL(objectUrl);
+        } else {
+            setAvatarObjectUrl(null);
         }
-        return typeof editedInfo.avatar === "string" && editedInfo.avatar !== ""
-            ? editedInfo.avatar
-            : imgUserDefault;
     }, [editedInfo.avatar]);
 
-    useEffect(() => {
-        return () => {
-            if (avatarObjectUrl) {
-                URL.revokeObjectURL(avatarObjectUrl);
-            }
-        };
-    }, [avatarObjectUrl]);
+    const previewUrl = editedInfo.avatar instanceof File
+        ? avatarObjectUrl
+        : typeof editedInfo.avatar === "string" && editedInfo.avatar !== ""
+            ? editedInfo.avatar
+            : imgUserDefault;
+
+
+    const isSaveDisabled = isProcessing || !!errors.name || !editedInfo.name?.trim();
 
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-overlay" onClick={handleCancel}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <h2>Thông tin cá nhân</h2>
-                    <button className="modal-close" onClick={onClose}>
+                    <button className="modal-close" onClick={handleCancel}>
                         &times;
                     </button>
                 </div>
@@ -86,11 +125,12 @@ const UserInfor = ({
                                 className="avatar-image"
                                 onError={(e) => (e.target.src = imgUserDefault)}
                             />
-                            {editedInfo.avatar && isEditable && (
+                            {editedInfo.avatar && (
                                 <button
                                     className="avatar-delete-button"
                                     onClick={handleDeleteImage}
                                     title="Xóa ảnh"
+                                    disabled={isProcessing}
                                 >
                                     ✖
                                 </button>
@@ -105,7 +145,7 @@ const UserInfor = ({
                                 accept="image/*"
                                 style={{ display: "none" }}
                                 onChange={handleImageChange}
-                                disabled={!isEditable}
+                                disabled={isProcessing}
                             />
                         </label>
                     </div>
@@ -115,10 +155,11 @@ const UserInfor = ({
                         <input
                             name="name"
                             type="text"
-                            value={editedInfo.name}
+                            value={editedInfo.name || ""}
                             onChange={handleChange}
-                            disabled={!isEditable}
+                            disabled={isProcessing}
                         />
+                        <span className="error-message">{errors.name || " "}</span>
                     </div>
 
                     <div className="modal-field">
@@ -126,7 +167,7 @@ const UserInfor = ({
                         <input
                             name="email"
                             type="email"
-                            value={editedInfo.email}
+                            value={editedInfo.email || ""}
                             readOnly
                             disabled
                         />
@@ -136,13 +177,17 @@ const UserInfor = ({
                 <div className="modal-actions">
                     <button
                         className="modal-button save"
-                        onClick={() => onSave(editedInfo)}
-                        disabled={!isEditable}
+                        onClick={() => { handleSaveChanges(editedInfo) }}
+                        disabled={isSaveDisabled}
                     >
-                        Lưu
+                        {isProcessing ? "Đang lưu..." : "Lưu"}
                     </button>
 
-                    <button className="modal-button cancel" onClick={onClose} disabled={!isEditable}>
+                    <button
+                        className="modal-button cancel"
+                        onClick={handleCancel}
+                        disabled={isProcessing}
+                    >
                         Hủy
                     </button>
                 </div>

@@ -1,50 +1,75 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../configs/axiosInstance";
-import { emailValidator, passwordValidator } from "../../helpers/validation";
+import { emailValidator, passwordValidator } from "../../utils/validation";
 import { useAuth } from "../../contexts/AuthContext";
 import "../../styles/login.css";
-
 
 const Login = () => {
     const navigate = useNavigate();
     const { loggedIn } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showResendLink, setShowResendLink] = useState(false);
     const [formData, setFormData] = useState({
         email: "",
         password: ""
     });
-    const [error, setError] = useState(null);
-    const [showResendLink, setShowResendLink] = useState(false);
+
+    const [errors, setErrors] = useState({});
+
+    const setError = (field, message) => {
+        setErrors(prev => ({
+            ...prev,
+            [field]: message
+        }));
+    };
+
+    const clearError = (field) => {
+        setErrors(prev => {
+            const updated = { ...prev };
+            delete updated[field];
+            return updated;
+        });
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-
         setFormData(prev => ({
             ...prev,
             [name]: value,
         }));
 
-        if (name === "email" && value && !emailValidator(value)) {
-            setError("Email không hợp lệ");
-            return;
-        }
-
-        if (name === "password" && value) {
-            const passwordErrors = passwordValidator(value);
-            if (passwordErrors) {
-                setError(passwordErrors);
-                return;
+        // Validate on change
+        if (name === "email") {
+            if (!emailValidator(value)) {
+                setError("email", "Email không hợp lệ");
+            } else {
+                clearError("email");
             }
         }
-        setError(null);
+
+        if (name === "password") {
+            const passwordError = passwordValidator(value);
+            if (passwordError) {
+                setError("password", passwordError);
+            } else {
+                clearError("password");
+            }
+        }
+
+        clearError("general"); // reset general errors when typing
     };
+
+    const isFormInvalid =
+        Object.keys(errors).length > 0 ||
+        !formData.email.trim() ||
+        !formData.password.trim();
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        if (isProcessing) return;
+        if (isProcessing || isFormInvalid) return;
         setIsProcessing(true);
         const { email, password } = formData;
 
@@ -59,9 +84,9 @@ const Login = () => {
             const msg = err.response?.data?.message || "Đăng nhập thất bại";
             if (err.response?.status === 403 && err.response?.data?.err_code === "ACCOUNT_NOT_ACTIVATED") {
                 setShowResendLink(true);
-                setError("Tài khoản của bạn chưa được kích hoạt.");
+                setError("general", "Tài khoản của bạn chưa được kích hoạt.");
             } else {
-                setError(msg);
+                setError("general", msg);
             }
         } finally {
             setIsProcessing(false);
@@ -72,16 +97,20 @@ const Login = () => {
         <div className="login-page">
             <h1>Đăng nhập</h1>
             <form>
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    className="login-input"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    disabled={isProcessing}
-                />
+                <div className="input-wrapper">
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        className="login-input"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        disabled={isProcessing}
+                    />
+                    <span className="error-message">{errors.email || " "}</span>
+                </div>
+
                 <div className="input-wrapper">
                     <input
                         type={showPassword ? "text" : "password"}
@@ -101,7 +130,9 @@ const Login = () => {
                     >
                         {showPassword ? <FaEyeSlash /> : <FaEye />}
                     </button>
+                    <span className="error-message">{errors.password || " "}</span>
                 </div>
+
                 <div className="forgot-password">
                     <Link
                         to="/forgot-password"
@@ -111,11 +142,14 @@ const Login = () => {
                         Quên mật khẩu?
                     </Link>
                 </div>
-                <button className="login-btn" onClick={handleLogin} disabled={isProcessing}>
+
+                <button className="login-btn" onClick={handleLogin} disabled={isProcessing || isFormInvalid}>
                     {isProcessing ? "Đang xử lý..." : "Đăng nhập"}
                 </button>
             </form>
-            {error && <p style={{ color: "red" }}>{error}</p>}
+
+            <span className="error-message">{errors.general || " "}</span>
+
             {showResendLink && (
                 <Link
                     to="/resend-link"
@@ -125,6 +159,7 @@ const Login = () => {
                     Nhấn vào đây để gửi lại liên kết kích hoạt
                 </Link>
             )}
+
             <p className="register-link">
                 Bạn chưa có tài khoản?{" "}
                 <Link

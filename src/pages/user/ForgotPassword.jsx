@@ -1,44 +1,58 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { emailValidator } from "../../helpers/validation";
+import { emailValidator } from "../../utils/validation";
 import axiosInstance from "../../configs/axiosInstance";
 import { toast } from 'react-toastify';
-import "../../styles/forgot-password.css"
+import "../../styles/forgot-password.css";
 
 const ForgotPasswordForm = () => {
     const [email, setEmail] = useState("");
-    const [error, setError] = useState(null);
+    const [errors, setErrors] = useState({});
     const [isProcessing, setIsProcessing] = useState(false);
+
+    const setError = (field, message) => {
+        setErrors(prev => ({
+            ...prev,
+            [field]: message
+        }));
+    };
+
+    const clearError = (field) => {
+        setErrors(prev => {
+            const updated = { ...prev };
+            delete updated[field];
+            return updated;
+        });
+    };
 
     const handleChange = (e) => {
         const value = e.target.value;
         setEmail(value);
-        // Kiểm tra lỗi ngay khi người dùng nhập email
-        if (value && !emailValidator(value)) {
-            setError("Email không hợp lệ");
-            return;
+
+        if (!emailValidator(value)) {
+            setError("email", "Email không hợp lệ");
+        } else {
+            clearError("email");
         }
-        setError(null);
-    }
+
+        clearError("general");
+    };
 
     const handleResetPassword = async (e) => {
         e.preventDefault();
-        if (isProcessing) return;
-        setIsProcessing(true);
-        try {
+        if (isProcessing || !email.trim() || errors.email) return;
 
-            await axiosInstance.post(
-                "/auth/forgot-password",
-                { email }
-            );
+        setIsProcessing(true);
+
+        try {
+            await axiosInstance.post("/auth/forgot-password", { email });
             toast.success("Mật khẩu mới đã được gửi về email của bạn");
             setEmail("");
         } catch (err) {
             const msg = err.response?.data?.message || "Khôi phục mật khẩu thất bại";
-            setError(msg);
-        }
-        finally {
-            setIsProcessing(false)
+            setError("general", msg);
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -49,6 +63,7 @@ const ForgotPasswordForm = () => {
                 <p className="subtitle">
                     Điền email gắn với tài khoản để nhận hướng dẫn <br />đặt lại mật khẩu
                 </p>
+
                 <form className="form">
                     <div className="input-group">
                         <label className="label">Email</label>
@@ -61,14 +76,23 @@ const ForgotPasswordForm = () => {
                             disabled={isProcessing}
                             required
                         />
+                        <span className="error-message">{errors.email || " "}</span>
                     </div>
-                    <button type="submit" className="submit-button" onClick={handleResetPassword} disabled={isProcessing}>
+
+                    <button
+                        type="submit"
+                        className="submit-button"
+                        onClick={handleResetPassword}
+                        disabled={isProcessing || !!errors.email || !email.trim()}
+                    >
                         {isProcessing ? "Đang xử lý..." : "Tiếp tục"}
                     </button>
                 </form>
-                {error && <p style={{ color: "red" }}>{error}</p>}
+
+                <span className="error-message">{errors.general || " "}</span>
+
                 <p className="back-link">
-                    Đã có tài khoản?
+                    Đã có tài khoản?{" "}
                     <Link
                         to="/login"
                         onClick={(e) => isProcessing && e.preventDefault()}

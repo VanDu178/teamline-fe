@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import './ChatItem.css';
 import { useChat } from '../../../contexts/ChatContext';
 import { useAuth } from "../../../contexts/AuthContext"
 import { emitSocketEvent } from '../../../configs/socketEmitter';
+import imgUserDefault from "../../../assets/images/img-user-default.jpg"
 
 const ChatItem = ({ name, time, message, avatar, chatId, sender, readed }) => {
   const { roomId, setRoomId, setMessages } = useChat();
@@ -20,9 +21,10 @@ const ChatItem = ({ name, time, message, avatar, chatId, sender, readed }) => {
     //nếu không đang trong chatbox nào + render chatbox lần đầu 
     setRoomId(chatId);
   };
+
   return (
     <div className="chat-item" onClick={handleClick}>
-      <img src={avatar} alt={`${name}'s avatar`} className="chat-avatar" />
+      <img src={avatar} alt={`${name}'s avatar`} className="chat-avatar" onError={(e) => (e.target.src = imgUserDefault)} />
       <div className="chat-details">
         <div className="chat-name">{name}</div>
         <div className="chat-message-wrapper">

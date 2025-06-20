@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { HiMiniUserGroup } from "react-icons/hi2";
+import { HiArrowTurnUpLeft, HiMiniUserGroup } from "react-icons/hi2";
 import ChatItem from "../ChatItem/ChatItem";
 import UserItem from "../UserItem/UserItem"
 import { useAuth } from "../../../contexts/AuthContext";
@@ -10,40 +10,65 @@ import imgUserDefault from "../../../assets/images/img-user-default.jpg";
 import CreateGroupModal from "../../modal/CreateGroupModal/CreateGroupModal";
 import { getSocket } from "../../../utils/socket";
 import { toast } from "react-toastify";
-
 import "./ChatList.css";
 
 const ChatList = () => {
-    // const [chats, setChats] = useState([]);
-    const { chats, setChats, chatsRef } = useChat();
+    const { chats, setChats, chatsRef, isSearchingRef } = useChat();
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [hasMore, setHasMore] = useState(true);
     const listRef = useRef(null);
     const isFetchingRef = useRef(false);
     const [searchValue, setSearchValue] = useState("");
-    const [isSearching, setIsSearching] = useState(false);
+    const [searchDone, setSearchDone] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
     const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
     const currentSocket = getSocket();
     const { user } = useAuth();
 
+
+    useEffect(() => {
+        isSearchingRef.current = isInputFocused;
+    }, [isInputFocused])
+
+    useEffect(() => {
+        fetchChats();
+    }, [hasMore, isInputFocused]);
+
+    useEffect(() => {
+        chatsRef.current = chats;
+        const listEl = listRef.current;
+        if (!listEl) return;
+
+        const handleScroll = () => {
+            const { scrollTop, scrollHeight, clientHeight } = listEl;
+            if (scrollTop + clientHeight >= scrollHeight - 200) {
+                fetchChats();
+            }
+        };
+        listEl.addEventListener("scroll", handleScroll);
+        return () => listEl.removeEventListener("scroll", handleScroll);
+    }, [chats]);
+
+
     const handleCreateGroup = async (groupData) => {
         try {
             const response = await axiosInstance.post("/chats/create-group", {
-                name: groupData.name,
-                memberIds: groupData.members.map((member) => member._id),
+                name: groupData?.name,
+                memberIds: groupData?.knownUsers.map((user) => user._id),
             });
-
             const newGroup = response?.data?.group;
-            console.log(newGroup);
             toast.success("Tạo nhóm thành công!");
             setChats((prev) => [newGroup, ...prev]);
-
             //Emit socket để thông báo cho các thành viên được thêm vào nhóm
-            currentSocket.emit("group-created", {
-                newGroup: newGroup
-            });
+            if (newGroup) {
+                currentSocket.emit("group-created", {
+                    newGroup: newGroup,
+                    knownUsers: groupData?.knownUsers,
+                    unknownUsers: groupData?.unknownUsers,
+                });
+            }
+            return;
 
         } catch (error) {
             toast.error("Tạo nhóm thất bại!");
@@ -55,24 +80,20 @@ const ChatList = () => {
     const handleSearch = async () => {
         const keyword = searchValue.trim();
         if (!keyword) return;
-
-        setIsSearching(true);
         setIsLoading(true);
         setError(null);
 
         try {
             const res = await axiosInstance.get(`/users/${keyword}`)
             const user = res?.data?.user;
+            console.log("thong tin user", res)
             setChats(user ? [{ ...user, chatId: res?.data?.chatId }] : []);
             setHasMore(false);
         } catch (err) {
-            setError({
-                message: "Không tìm thấy người dùng với email đó.",
-                retryable: false,
-            });
             setChats([]);
         } finally {
             setIsLoading(false);
+            setSearchDone(true);
         }
     };
 
@@ -83,11 +104,10 @@ const ChatList = () => {
     };
 
     const fetchChats = async () => {
-        if (isFetchingRef.current || !hasMore || isSearching) return;
+        if (isFetchingRef.current || !hasMore || isInputFocused) return;
 
-        isFetchingRef.current = true; // dùng để phòng tránh trường hợp người dùng scroll xuống đáy nhiều lần gây chạy trùng lặp 
+        isFetchingRef.current = true;
         setError(null);
-        console.log("chay vao fetch chat")
         //chỉ khi nào load lần đầu mới có trạng thái loading..., lúc scroll thì không cần 
         if (chats.length === 0) setIsLoading(true);
         try {
@@ -108,37 +128,25 @@ const ChatList = () => {
             if (newChats.length < 15) setHasMore(false);
 
         } catch (err) {
-            const retryable = err.response?.data?.retryable;
-            setError({
-                message: "Đã xảy ra lỗi khi tải danh sách chat.",
-                retryable,
-            });
-            console.error("Lỗi khi tải chats:", err);
+            if (err.code === "ERR_NETWORK") {
+                setError({
+                    message: "Đã xảy ra lỗi khi tải danh sách chat.",
+                    retryAble: true,
+                });
+            }
+            else {
+                const retryAble = err.response?.data?.retryAble;
+                setError({
+                    message: "Đã xảy ra lỗi khi tải danh sách chat.",
+                    retryAble,
+                });
+            }
         } finally {
             setIsLoading(false);
             isFetchingRef.current = false;
         }
     };
 
-    useEffect(() => {
-        fetchChats();
-    }, []);
-
-    useEffect(() => {
-        chatsRef.current = chats;
-        const listEl = listRef.current;
-        if (!listEl) return;
-
-        const handleScroll = () => {
-            const { scrollTop, scrollHeight, clientHeight } = listEl;
-            if (scrollTop + clientHeight >= scrollHeight - 200) {
-                fetchChats();
-            }
-        };
-
-        listEl.addEventListener("scroll", handleScroll);
-        return () => listEl.removeEventListener("scroll", handleScroll);
-    }, [chats]);
 
 
     return (
@@ -153,7 +161,6 @@ const ChatList = () => {
                         onFocus={() => {
                             setIsInputFocused(true);
                             setChats([]);
-                            setIsSearching(false);
                         }}
                         onKeyDown={handleKeyDown}
                     />
@@ -161,12 +168,11 @@ const ChatList = () => {
                         <button
                             className="search-close-btn"
                             onClick={() => {
+                                setSearchDone(false);
                                 setIsInputFocused(false);
-                                setSearchValue("");
-                                setIsSearching(false);
-                                setChats([]);
                                 setHasMore(true);
-                                fetchChats();
+                                setChats([]);
+                                setSearchValue("");
                             }}
                         >
                             ✕
@@ -174,17 +180,18 @@ const ChatList = () => {
                     )}
 
                 </div>
-                <span className="create-group-icon" onClick={() => setIsCreateGroupModalOpen(true)}>
-                    +
-                    <HiMiniUserGroup />
-                </span>
+                {!isInputFocused &&
+                    <span className="create-group-icon" onClick={() => { setIsCreateGroupModalOpen(true); }}>
+                        +
+                        <HiMiniUserGroup />
+                    </span>}
             </div>
 
             {isLoading && chats.length === 0 ? (
                 <div className="loading-state">Đang tải...</div>
             ) : error ? (
                 <div className="error-state">
-                    {error.retryable ? (
+                    {error.retryAble ? (
                         <>
                             <div>Đã xảy ra lỗi, hãy thử lại.</div>
                             <button onClick={fetchChats}>Thử lại</button>
@@ -195,14 +202,16 @@ const ChatList = () => {
                 </div>
             ) : chats.length === 0 ? (
                 <div className="empty-state">
-                    {isSearching
-                        ? "Không tìm thấy người dùng nào."
-                        : "Bạn chưa có cuộc hội thoại nào"}
+                    {searchDone
+                        ? "Không tìm thấy kết quả"
+                        : searchValue.trim() && !searchDone
+                            ? "Nhấn Enter để tìm kiếm người dùng"
+                            : "Bạn chưa có cuộc hội thoại nào"}
                 </div>
             ) : (
                 <div className="chatlist-content" ref={listRef}>
                     {chats.map((item) => {
-                        if (isSearching) {
+                        if (searchDone) {
                             return (
                                 <UserItem
                                     key={item._id}
@@ -218,6 +227,7 @@ const ChatList = () => {
                             item?.type === "private"
                                 ? item?.members?.find((member) => member._id.toString() !== user._id.toString())
                                 : null;
+
 
                         const readed = item?.lastMessage?.seenBy?.some(
                             (seenUser) => seenUser._id.toString() === user._id.toString()
@@ -238,9 +248,12 @@ const ChatList = () => {
                                 }
                                 avatar={
                                     otherUser
-                                        ? otherUser.avatar || imgUserDefault
+                                        ? otherUser.avatar && otherUser.avatar.trim() !== ""
+                                            ? otherUser.avatar
+                                            : imgUserDefault
                                         : imgGroupDefault
                                 }
+
                                 message={
                                     item?.lastMessage?.content ||
                                     item?.lastMessage?.fileUrl ||
@@ -255,12 +268,8 @@ const ChatList = () => {
 
                     {isLoading && <div className="loading-state">Đang tải thêm...</div>}
 
-                    {!hasMore && !isSearching && !searchValue.trim() && (
+                    {!hasMore && !searchDone && !searchValue.trim() && (
                         <div className="end-state">Đã hết cuộc trò chuyện</div>
-                    )}
-
-                    {searchValue.trim() && !isSearching && (
-                        <div className="search-hint">Nhấn Enter để tìm kiếm người dùng</div>
                     )}
                 </div>
             )}

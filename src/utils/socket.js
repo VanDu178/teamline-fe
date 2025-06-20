@@ -46,39 +46,47 @@ export const registerSocketEvents = (socket) => {
   const userId = Cookies.get("userID");
   if (!socket || !chatStore) return;
 
-  const { setMessages, roomIdRef, setChats, chatsRef, setRoomId } = chatStore;
-
-  socket.on("received-message", async (msg) => {
-    console.log('msg', msg);
-    if (msg.sender === userId) return;
-    const roomId = roomIdRef?.current;
-    // Nếu đang trong phòng chat đó, thêm tin nhắn
-    if (msg?.chat?._id === roomId) {
-      setMessages((prev) => [...prev, msg]);
+  const {
+    setMessages,
+    roomIdRef,
+    setChats,
+    chatsRef,
+    setRoomId,
+    isSearchingRef,
+  } = chatStore;
+  //Hàm update chats dùng chung cho các event
+  const updateChatList = async ({
+    chatId,
+    lastMessage,
+    axiosInstance,
+    setChats,
+  }) => {
+    if (isSearchingRef.current) {
+      console.log(
+        "Sau này sẽ tạo thông báo chuông + thông báo có tin nhắn đang chờ ở đây"
+      );
+      return;
     }
-    // Cập nhật danh sách chat
     const chats = chatsRef?.current || [];
-    const existingIndex = chats.findIndex((c) => c._id === msg?.chat?._id);
-
+    const existingIndex = chats.findIndex((c) => c._id === chatId);
     if (existingIndex !== -1) {
-      // Đã có: cập nhật lastMessage và đẩy lên đầu
       const updatedChat = {
         ...chats[existingIndex],
-        lastMessage: msg,
+        lastMessage,
       };
 
-      const newList = [
+      const newChats = [
         updatedChat,
         ...chats.slice(0, existingIndex),
         ...chats.slice(existingIndex + 1),
       ];
 
-      setChats(newList);
+      setChats(newChats);
     } else {
-      // Chưa có: fetch chat từ API và thêm vào đầu
       try {
-        const res = await axiosInstance.get(`/chats/${msg?.chat?._id}`);
-        const newChat = res.data;
+        const res = await axiosInstance.get(`/chats/${chatId}`);
+        console.log("da cahy vao day", res);
+        const newChat = res?.data;
         if (newChat) {
           setChats((prev) => [newChat, ...prev]);
         }
@@ -86,6 +94,22 @@ export const registerSocketEvents = (socket) => {
         console.error("Không thể fetch chat mới:", err);
       }
     }
+  };
+
+  socket.on("received-message", async (msg) => {
+    console.log("msg", msg);
+    if (msg.sender === userId) return;
+    const roomId = roomIdRef?.current;
+    // Nếu đang trong phòng chat đó, thêm tin nhắn
+    if (msg?.chat?._id === roomId) {
+      setMessages((prev) => [...prev, msg]);
+    }
+    await updateChatList({
+      chatId: msg.chat,
+      lastMessage: msg,
+      axiosInstance,
+      setChats,
+    });
   });
 
   socket.on("message-sent", async (data) => {
@@ -111,76 +135,50 @@ export const registerSocketEvents = (socket) => {
         prevMessages.map((msg) =>
           msg.localId === localId
             ? {
-              ...msg,
-              chat: chatId,
-              createdAt: sentAt,
-              updatedAt: sentAt,
-              _id: messageId,
-            }
+                ...msg,
+                chat: chatId,
+                createdAt: sentAt,
+                updatedAt: sentAt,
+                _id: messageId,
+              }
             : msg
         )
       );
 
+      //Nếu đang trong trạng thái search thì lúc này chỉ cần tạo thông báo thôi
       // cập nhật danh sách chats
-      const updateChats = async () => {
-        const chats = chatsRef?.current || [];
-        const existing = chats.find((c) => c._id === chatId);
-
-        if (existing) {
-          const updatedChat = {
-            ...existing,
-            lastMessage: {
-              ...existing.lastMessage,
-              content: messageContent,
-              sender: messageSender,
-              createdAt: sentAt,
-            },
-          };
-
-          const newChats = [
-            updatedChat,
-            ...chats.filter((c) => c._id !== chatId),
-          ];
-
-          setChats(newChats);
-        } else {
-          // Nếu chat chưa tồn tại, fetch từ API
-          try {
-            const res = await axiosInstance.get(`/chats/${chatId}`);
-            const newChat = res.data;
-            if (newChat) {
-              setChats((prev) => [newChat, ...prev]);
-            }
-          } catch (err) {
-            console.error("Không thể fetch chat mới từ message-sent:", err);
-          }
-        }
-      };
-
-      updateChats();
+      await updateChatList({
+        chatId,
+        lastMessage: {
+          content: messageContent,
+          sender: messageSender,
+          createdAt: sentAt,
+        },
+        axiosInstance,
+        setChats,
+      });
 
       // cập nhật ref nếu có
-      if (chatsRef?.current) {
-        chatsRef.current = chatsRef.current.filter((c) => c._id !== chatId);
-        const updated = {
-          ...chatsRef.current.find((c) => c._id === chatId),
-          lastMessage: {
-            content: "...",
-            sender: { _id: "self" },
-            createdAt: sentAt,
-          },
-        };
-        chatsRef.current = [updated, ...chatsRef.current];
-      }
+      // if (chatsRef?.current) {
+      //   chatsRef.current = chatsRef.current.filter((c) => c._id !== chatId);
+      //   const updated = {
+      //     ...chatsRef.current.find((c) => c._id === chatId),
+      //     lastMessage: {
+      //       content: "...",
+      //       sender: { _id: "self" },
+      //       createdAt: sentAt,
+      //     },
+      //   };
+      //   chatsRef.current = [updated, ...chatsRef.current];
+      // }
     }
   });
 
   socket.on("group-new", ({ newGroup }) => {
+    console.log("nhan duoc su kien nay");
     const chats = chatsRef?.current || [];
-
     const exists = chats.some((chat) => chat._id === newGroup._id);
     if (exists) return;
-
     setChats((prev) => [newGroup, ...prev]);
   });
 
@@ -222,14 +220,13 @@ export const registerSocketEvents = (socket) => {
       prevMessages.map((msg) =>
         msg.localId === localId
           ? (() => {
-            const { updatedAt, ...rest } = msg; // Xóa updatedAt
-            return rest;
-          })()
+              const { updatedAt, ...rest } = msg; // Xóa updatedAt
+              return rest;
+            })()
           : msg
       )
     );
   });
-
 };
 
 export const getSocket = () => {

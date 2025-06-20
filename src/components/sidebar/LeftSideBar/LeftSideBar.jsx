@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { toast } from 'react-toastify';
 import Cookies from "js-cookie";
 import UserInforModal from "../../modal/UserInforModal/UserInforModal";
 import SettingsModal from "../../modal/SettingsModal/SettingsModal";
 import { useAuth } from "../../../contexts/AuthContext";
-import { ThemeProvider, useTheme } from "../../../contexts/ThemeContext";
+import { useTheme } from "../../../contexts/ThemeContext";
 import imgUserDefault from "../../../assets/images/img-user-default.jpg";
 import axiosInstance from "../../../configs/axiosInstance";
 import "./LeftSideBar.css";
@@ -16,12 +15,10 @@ const LeftSideBar = () => {
     const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [activeIcon, setActiveIcon] = useState(null);
-    const { user, setUser, setIsAuthenticated, setUserId } = useAuth();
     const { setChats, chatsRef, setMessages } = useChat();
-    const [editedInfo, setEditedInfo] = useState({ ...user });
+    const { user, setUser, setIsAuthenticated, setUserId } = useAuth();
     const { isDarkMode, toggleTheme } = useTheme();
     const sidebarRef = useRef(null);
-
 
     const handleAvatarClick = () => {
         setIsAvataOpen(!isAvataOpen);
@@ -56,38 +53,7 @@ const LeftSideBar = () => {
         setIsUserInfoModalOpen(true);
         setIsAvataOpen(false);
         setActiveIcon(null);
-        setEditedInfo({ ...user });
     };
-
-    const handleCancel = () => {
-        setIsUserInfoModalOpen(false);
-    };
-
-
-    const handleSaveChanges = async () => {
-        try {
-            const formData = new FormData();
-            formData.append("name", editedInfo.name);
-            // Nếu là File, gửi lên
-            if (editedInfo.avatar instanceof File) {
-                formData.append("avatar", editedInfo.avatar);
-            }
-            // Nếu người dùng đã xoá avatar (rỗng chuỗi), báo backend
-            if (editedInfo.avatar === "") {
-                formData.append("removeAvatar", "true");
-            }
-            // Gửi formData bằng Axios
-            const response = await axiosInstance.put(`/users/${user._id}`, formData);
-            const updatedUser = response.data?.user;
-            setUser(updatedUser);
-            setIsUserInfoModalOpen(false);
-            toast.success("Cập nhật thông tin thành công");
-            Cookies.set("user", JSON.stringify(updatedUser), { expires: 365 });
-        } catch (error) {
-            console.error("Lỗi cập nhật:", error);
-        }
-    };
-
 
 
 
@@ -163,12 +129,7 @@ const LeftSideBar = () => {
 
             <UserInforModal
                 isOpen={isUserInfoModalOpen}
-                onClose={handleCancel}
-                onSave={handleSaveChanges}
-                onChange={setEditedInfo}
-                editedInfo={editedInfo}
-                setEditedInfo={setEditedInfo}
-                isEditable={true}
+                setIsUserInfoModalOpen={setIsUserInfoModalOpen}
             />
             <SettingsModal
                 isOpen={isSettingsModalOpen}

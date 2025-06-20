@@ -32,7 +32,7 @@
   background-color: var(--input-background);
   color: var(--text-primary);
   border: 1px solid var(--input-background);
-  border-radius: 0.5rem 0 0 0.5rem; /* Chỉ bo góc trái và phải trên dưới */
+  border-radius: 0.5rem;
   font-size: 0.9rem;
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   box-sizing: border-box;
@@ -103,6 +103,7 @@
 }
 
 .chatlist-content {
+  margin-top: 10px;
   flex: 1;
   overflow-y: auto;
   width: 100%;
@@ -161,6 +162,7 @@
   text-align: center;
   padding: 1rem;
   border-radius: 0.25rem;
+  margin-top:10px;
 }
 
 .loading-state {
