@@ -20,7 +20,7 @@ const ChatList = () => {
     const listRef = useRef(null);
     const isFetchingRef = useRef(false);
     const [searchValue, setSearchValue] = useState("");
-    const [isSearching, setIsSearching] = useState(false);
+    const [searchDone, setSearchDone] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
     const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
     const currentSocket = getSocket();
@@ -31,30 +31,44 @@ const ChatList = () => {
         isSearchingRef.current = isInputFocused;
     }, [isInputFocused])
 
-    const handleOpenCreateGroup = () => {
-        setIsCreateGroupModalOpen(true);
-        setIsInputFocused(false);
-        setChats([]);
-        setHasMore(true);
-        setSearchValue("");
+    useEffect(() => {
         fetchChats();
-    }
+    }, [hasMore, isInputFocused]);
+
+    useEffect(() => {
+        chatsRef.current = chats;
+        const listEl = listRef.current;
+        if (!listEl) return;
+
+        const handleScroll = () => {
+            const { scrollTop, scrollHeight, clientHeight } = listEl;
+            if (scrollTop + clientHeight >= scrollHeight - 200) {
+                fetchChats();
+            }
+        };
+        listEl.addEventListener("scroll", handleScroll);
+        return () => listEl.removeEventListener("scroll", handleScroll);
+    }, [chats]);
+
+
     const handleCreateGroup = async (groupData) => {
         try {
             const response = await axiosInstance.post("/chats/create-group", {
-                name: groupData.name,
-                memberIds: groupData.members.map((member) => member._id),
+                name: groupData?.name,
+                memberIds: groupData?.knownUsers.map((user) => user._id),
             });
-
             const newGroup = response?.data?.group;
-            console.log(newGroup);
             toast.success("Tạo nhóm thành công!");
             setChats((prev) => [newGroup, ...prev]);
-
             //Emit socket để thông báo cho các thành viên được thêm vào nhóm
-            currentSocket.emit("group-created", {
-                newGroup: newGroup
-            });
+            if (newGroup) {
+                currentSocket.emit("group-created", {
+                    newGroup: newGroup,
+                    knownUsers: groupData?.knownUsers,
+                    unknownUsers: groupData?.unknownUsers,
+                });
+            }
+            return;
 
         } catch (error) {
             toast.error("Tạo nhóm thất bại!");
@@ -66,8 +80,6 @@ const ChatList = () => {
     const handleSearch = async () => {
         const keyword = searchValue.trim();
         if (!keyword) return;
-
-        setIsSearching(true);
         setIsLoading(true);
         setError(null);
 
@@ -81,6 +93,7 @@ const ChatList = () => {
             setChats([]);
         } finally {
             setIsLoading(false);
+            setSearchDone(true);
         }
     };
 
@@ -91,8 +104,9 @@ const ChatList = () => {
     };
 
     const fetchChats = async () => {
-        if (isFetchingRef.current || !hasMore || isSearching) return;
-        isFetchingRef.current = true; // dùng để phòng tránh trường hợp người dùng scroll xuống đáy nhiều lần gây chạy trùng lặp 
+        if (isFetchingRef.current || !hasMore || isInputFocused) return;
+
+        isFetchingRef.current = true;
         setError(null);
         //chỉ khi nào load lần đầu mới có trạng thái loading..., lúc scroll thì không cần 
         if (chats.length === 0) setIsLoading(true);
@@ -133,25 +147,6 @@ const ChatList = () => {
         }
     };
 
-    useEffect(() => {
-        fetchChats();
-    }, []);
-
-    useEffect(() => {
-        chatsRef.current = chats;
-        const listEl = listRef.current;
-        if (!listEl) return;
-
-        const handleScroll = () => {
-            const { scrollTop, scrollHeight, clientHeight } = listEl;
-            if (scrollTop + clientHeight >= scrollHeight - 200) {
-                fetchChats();
-            }
-        };
-
-        listEl.addEventListener("scroll", handleScroll);
-        return () => listEl.removeEventListener("scroll", handleScroll);
-    }, [chats]);
 
 
     return (
@@ -166,7 +161,6 @@ const ChatList = () => {
                         onFocus={() => {
                             setIsInputFocused(true);
                             setChats([]);
-                            setIsSearching(false);
                         }}
                         onKeyDown={handleKeyDown}
                     />
@@ -174,11 +168,11 @@ const ChatList = () => {
                         <button
                             className="search-close-btn"
                             onClick={() => {
+                                setSearchDone(false);
                                 setIsInputFocused(false);
-                                setChats([]);
                                 setHasMore(true);
+                                setChats([]);
                                 setSearchValue("");
-                                fetchChats();
                             }}
                         >
                             ✕
@@ -186,10 +180,11 @@ const ChatList = () => {
                     )}
 
                 </div>
-                <span className="create-group-icon" onClick={handleOpenCreateGroup}>
-                    +
-                    <HiMiniUserGroup />
-                </span>
+                {!isInputFocused &&
+                    <span className="create-group-icon" onClick={() => { setIsCreateGroupModalOpen(true); }}>
+                        +
+                        <HiMiniUserGroup />
+                    </span>}
             </div>
 
             {isLoading && chats.length === 0 ? (
@@ -207,18 +202,16 @@ const ChatList = () => {
                 </div>
             ) : chats.length === 0 ? (
                 <div className="empty-state">
-                    {isSearching
+                    {searchDone
                         ? "Không tìm thấy kết quả"
-                        : searchValue.trim() && !isSearching
+                        : searchValue.trim() && !searchDone
                             ? "Nhấn Enter để tìm kiếm người dùng"
                             : "Bạn chưa có cuộc hội thoại nào"}
                 </div>
-
-
             ) : (
                 <div className="chatlist-content" ref={listRef}>
                     {chats.map((item) => {
-                        if (isSearching) {
+                        if (searchDone) {
                             return (
                                 <UserItem
                                     key={item._id}
@@ -275,12 +268,8 @@ const ChatList = () => {
 
                     {isLoading && <div className="loading-state">Đang tải thêm...</div>}
 
-                    {!hasMore && !isSearching && !searchValue.trim() && (
+                    {!hasMore && !searchDone && !searchValue.trim() && (
                         <div className="end-state">Đã hết cuộc trò chuyện</div>
-                    )}
-
-                    {searchValue.trim() && !isSearching && (
-                        <div className="search-hint">Nhấn Enter để tìm kiếm người dùng</div>
                     )}
                 </div>
             )}

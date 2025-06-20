@@ -232,6 +232,8 @@
   background-color: #2563eb;
 }
 
+
+
 @media (max-width: 767px) {
   .cgm-modal-content {
     width: 90%;
