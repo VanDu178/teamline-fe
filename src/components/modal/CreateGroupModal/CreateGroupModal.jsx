@@ -1,20 +1,23 @@
-import React, { useState, useEffect, useRef } from "react";
-import { HiMiniUserGroup } from "react-icons/hi2";
+import { useState, useEffect, useRef } from "react";
 import imgUserDefault from "../../../assets/images/img-user-default.jpg";
 import { toast } from "react-toastify";
 import axiosInstance from "../../../configs/axiosInstance";
 import { emailValidator } from "../../../utils/validation";
+import { FaSearch } from "react-icons/fa";
+import { useAuth } from "../../../contexts/AuthContext";
 import "./CreateGroupModal.css";
 
 const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
     const [groupName, setGroupName] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
+    const [emailFormatError, setEmailFormatError] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState(new Map());
     const [users, setUsers] = useState([]);
     const [cursor, setCursor] = useState(null);
     const [hasMore, setHasMore] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [notFound, setNotFound] = useState(false);
+    const { user } = useAuth();
     const listRef = useRef(null);
 
     useEffect(() => {
@@ -45,10 +48,15 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
 
     useEffect(() => {
         const delayDebounce = setTimeout(() => {
-            if (searchQuery.trim() === "" && isOpen) {
+            const trimmed = searchQuery.trim();
+            if (trimmed === "" && isOpen) {
+                setEmailFormatError(false);
                 fetchUsers(null);
-            } else if (emailValidator(searchQuery.trim())) {
-                searchUsers(searchQuery.trim());
+            } else if (emailValidator(trimmed)) {
+                setEmailFormatError(false);
+                searchUsers(trimmed);
+            } else if (trimmed.length > 0) {
+                setEmailFormatError(true);
             }
         }, 500);
 
@@ -57,18 +65,23 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
 
 
 
+
     const searchUsers = async (query) => {
         try {
             setIsLoading(true);
             setNotFound(false);
             const res = await axiosInstance.get(`/users/${query}`);
-            const user = res.data?.user;
+            const fetchedUser = res.data?.user;
+            if (fetchedUser._id === user._id) {
+                //Không trả về gì nếu search chính mình
+                return;
+            }
             const chatId = res.data?.chatId;
 
-            const formattedUser = user ? {
-                _id: user._id,
-                name: user.name,
-                avatar: user.avatar,
+            const formattedUser = fetchedUser ? {
+                _id: fetchedUser._id,
+                name: fetchedUser.name,
+                avatar: fetchedUser.avatar,
                 chatId: chatId || null
             } : null;
 
@@ -160,6 +173,7 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
         setCursor(null);
         setHasMore(true);
         setSearchQuery("");
+        setEmailFormatError(false);
     };
 
 
@@ -187,15 +201,18 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
                             placeholder="Nhập tên nhóm..."
                         />
                     </div>
+
                     <div className="cgm-member-search">
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Nhập email để tìm người dùng ..."
+                            className={emailFormatError ? "cgm-input-error" : ""}
                         />
-                        <span className="cgm-search-icon">🔍</span>
+                        <span className="cgm-search-icon"><FaSearch /></span>
                     </div>
+
                     <div className="cgm-member-container">
                         <div className="cgm-member-list" ref={listRef}>
                             {users.map((user) => (
