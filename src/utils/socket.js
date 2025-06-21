@@ -67,7 +67,9 @@ export const registerSocketEvents = (socket) => {
       );
       return;
     }
+    console.log("co chay vao ham nay, va searing hien tai khong co");
     const chats = chatsRef?.current || [];
+    console.log("cáda", chats);
     const existingIndex = chats.findIndex((c) => c._id === chatId);
     if (existingIndex !== -1) {
       const updatedChat = {
@@ -84,6 +86,7 @@ export const registerSocketEvents = (socket) => {
       setChats(newChats);
     } else {
       try {
+        console.log("co chay vao ham gọi chat");
         const res = await axiosInstance.get(`/chats/${chatId}`);
         console.log("da cahy vao day", res);
         const newChat = res?.data;
@@ -105,7 +108,7 @@ export const registerSocketEvents = (socket) => {
       setMessages((prev) => [...prev, msg]);
     }
     await updateChatList({
-      chatId: msg.chat,
+      chatId: msg?.chat?._id,
       lastMessage: msg,
       axiosInstance,
       setChats,
@@ -125,12 +128,24 @@ export const registerSocketEvents = (socket) => {
       localChatId,
     } = data;
 
+    await updateChatList({
+      chatId,
+      lastMessage: {
+        content: messageContent,
+        sender: messageSender,
+        createdAt: sentAt,
+      },
+      axiosInstance,
+      setChats,
+    });
     if (localChatId === roomIdRef?.current) {
+      console.log("chay tk này");
       setRoomId(chatId);
       return;
     }
 
     if (status === "saved") {
+      console.log("2");
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
           msg.localId === localId
@@ -147,16 +162,6 @@ export const registerSocketEvents = (socket) => {
 
       //Nếu đang trong trạng thái search thì lúc này chỉ cần tạo thông báo thôi
       // cập nhật danh sách chats
-      await updateChatList({
-        chatId,
-        lastMessage: {
-          content: messageContent,
-          sender: messageSender,
-          createdAt: sentAt,
-        },
-        axiosInstance,
-        setChats,
-      });
 
       // cập nhật ref nếu có
       // if (chatsRef?.current) {
@@ -175,7 +180,6 @@ export const registerSocketEvents = (socket) => {
   });
 
   socket.on("group-new", ({ newGroup }) => {
-    console.log("nhan duoc su kien nay");
     const chats = chatsRef?.current || [];
     const exists = chats.some((chat) => chat._id === newGroup._id);
     if (exists) return;
@@ -205,6 +209,12 @@ export const registerSocketEvents = (socket) => {
           : msg
       )
     );
+  });
+
+  socket.on("notification-new", (data) => {
+    //Thông báo chuông
+    //Cập nhật số lượng thông báo trên giao diện (nếu người dùng không đang trong box thông báo)
+    //Popup thông báo mới (nếu ngươi dùng đang trong box thông báo)
   });
 
   socket.on("error", ({ message }) => {

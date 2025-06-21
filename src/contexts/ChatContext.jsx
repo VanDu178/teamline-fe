@@ -10,6 +10,10 @@ export const ChatProvider = ({ children }) => {
     const [chats, setChats] = useState([]);
     const chatsRef = useRef([]);
     const isSearchingRef = useRef(false);
+    const [notifications, setNotifications] = useState([]);
+    const [notificationCount, setNotificationCount] = useState(null);
+    const notificationRef = useRef([]);
+    const notificationCountRef = useRef(null)
 
 
 
@@ -33,6 +37,12 @@ export const ChatProvider = ({ children }) => {
                 setChats,
                 chatsRef,
                 isSearchingRef,
+                notifications,
+                setNotifications,
+                notificationRef,
+                notificationCount,
+                setNotificationCount,
+                notificationCountRef
             }}
         >
             {children}
