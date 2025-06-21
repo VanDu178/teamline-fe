@@ -20,38 +20,28 @@ const LeftSideBar = () => {
     const [messageCount, setMessageCount] = useState(3); // giả lập số lượng tin nhắn
     const [notificationCount, setNotificationCount] = useState(5); // giả lập số lượng thông báo
     const [activeIcon, setActiveIcon] = useState(null);
-    const { setChats, chatsRef, setMessages } = useChat();
+    const { setChats, chatsRef, setMessages, notifications, setNotifications } = useChat();
     const { user, setUser, setIsAuthenticated, setUserId } = useAuth();
     const { isDarkMode, toggleTheme } = useTheme();
     const sidebarRef = useRef(null);
 
-    const notifications = [
-        { id: 1, message: "Bạn được Trường thêm vào nhóm tìm việc làm nodejs", time: "10:00 AM" },
-        { id: 2, message: "Bạn có yêu cầu kết bạn từ Nguyễn Trung Trực", time: "09:30 AM" },
-        { id: 3, message: "Đặng Trung Lợi đã thêm bạn vào nhóm", time: "08:15 AM" },
-        { id: 4, message: "Thông báo hệ thống: Cập nhật phiên bản mới", time: "Hôm qua" },
-        { id: 5, message: "Nâng cấp cơ chế bảo mật", time: "2 ngày trước" },
-    ];
-
-    const handleAvatarClick = () => {
-        setIsAvataOpen(!isAvataOpen);
-        setIsNotificationOpen(false);
-        setActiveIcon(activeIcon === "avatar" ? null : "avatar");
-    };
-
-    const handleIconClick = (iconName) => {
-        if (iconName !== "avatar" && isAvataOpen) {
-            setIsAvataOpen(false);
-        }
-        if (iconName === "notification") {
-            setIsNotificationOpen(!isNotificationOpen);
-            //reset số lượng thông báo về lại bằng 0 khi đóng khung thông báo 
-            //sau này có thể xử lý theo logic khác
-            if (isNotificationOpen) setNotificationCount(0);
-        }
-        setActiveIcon(activeIcon === iconName ? null : iconName);
-    };
-
+    // const notifications = [
+    //     { id: 1, message: "Bạn được Trường thêm vào nhóm tìm việc làm nodejs", time: "10:00 AM" },
+    //     { id: 2, message: "Bạn có yêu cầu kết bạn từ Nguyễn Trung Trực", time: "09:30 AM" },
+    //     { id: 3, message: "Đặng Trung Lợi đã thêm bạn vào nhóm", time: "08:15 AM" },
+    //     { id: 4, message: "Thông báo hệ thống: Cập nhật phiên bản mới", time: "Hôm qua" },
+    //     { id: 5, message: "Nâng cấp cơ chế bảo mật", time: "2 ngày trước" },
+    //     { id: 1, message: "Bạn được Trường thêm vào nhóm tìm việc làm nodejs", time: "10:00 AM" },
+    //     { id: 2, message: "Bạn có yêu cầu kết bạn từ Nguyễn Trung Trực", time: "09:30 AM" },
+    //     { id: 3, message: "Đặng Trung Lợi đã thêm bạn vào nhóm", time: "08:15 AM" },
+    //     { id: 4, message: "Thông báo hệ thống: Cập nhật phiên bản mới", time: "Hôm qua" },
+    //     { id: 5, message: "Nâng cấp cơ chế bảo mật", time: "2 ngày trước" },
+    //     { id: 1, message: "Bạn được Trường thêm vào nhóm tìm việc làm nodejs", time: "10:00 AM" },
+    //     { id: 2, message: "Bạn có yêu cầu kết bạn từ Nguyễn Trung Trực", time: "09:30 AM" },
+    //     { id: 3, message: "Đặng Trung Lợi đã thêm bạn vào nhóm", time: "08:15 AM" },
+    //     { id: 4, message: "Thông báo hệ thống: Cập nhật phiên bản mới", time: "Hôm qua" },
+    //     { id: 5, message: "Nâng cấp cơ chế bảo mật", time: "2 ngày trước" },
+    // ];
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -69,6 +59,28 @@ const LeftSideBar = () => {
     }, []);
 
 
+    const handleIconClick = (iconName) => {
+        if (iconName !== "avatar" && isAvataOpen) {
+            setIsAvataOpen(false);
+        }
+        if (iconName === "notification") {
+            if (!isNotificationOpen) setNotificationCount(0);
+            setIsNotificationOpen(!isNotificationOpen);
+            //reset số lượng thông báo về lại bằng 0 khi đóng khung thông báo 
+            //sau này có thể xử lý theo logic khác
+
+        }
+        setActiveIcon(activeIcon === iconName ? null : iconName);
+    };
+
+    //Avatar user 
+    const handleAvatarClick = () => {
+        setIsAvataOpen(!isAvataOpen);
+        setIsNotificationOpen(false);
+        setActiveIcon(activeIcon === "avatar" ? null : "avatar");
+    };
+
+
     //UserInfoModal
     const handleOpenUserInfoModal = () => {
         console.log("user", user);
@@ -76,6 +88,7 @@ const LeftSideBar = () => {
         setIsAvataOpen(false);
         setActiveIcon(null);
     };
+
 
     //Modal setting
     const handleCloseSettingsModal = () => {

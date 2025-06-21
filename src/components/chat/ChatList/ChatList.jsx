@@ -53,23 +53,17 @@ const ChatList = () => {
 
     const handleCreateGroup = async (groupData) => {
         try {
-            const response = await axiosInstance.post("/chats/create-group", {
-                name: groupData?.name,
-                memberIds: groupData?.knownUsers.map((user) => user._id),
+            currentSocket.emit("group-created", groupData, (response) => {
+                if (response?.error) {
+                    toast.error("Tạo nhóm thất bại!");
+                    console.error("Lỗi từ server:", response?.error);
+                } else {
+                    const newGroup = response?.data;
+                    setChats((prev) => [newGroup, ...prev]);
+                    toast.success("Đã tạo nhóm thành công!");
+                    console.log("Phản hồi server:", response?.data);
+                }
             });
-            const newGroup = response?.data?.group;
-            toast.success("Tạo nhóm thành công!");
-            setChats((prev) => [newGroup, ...prev]);
-            //Emit socket để thông báo cho các thành viên được thêm vào nhóm
-            if (newGroup) {
-                currentSocket.emit("group-created", {
-                    newGroup: newGroup,
-                    knownUsers: groupData?.knownUsers,
-                    unknownUsers: groupData?.unknownUsers,
-                });
-            }
-            return;
-
         } catch (error) {
             toast.error("Tạo nhóm thất bại!");
             console.error("Lỗi tạo nhóm:", error);
@@ -86,7 +80,6 @@ const ChatList = () => {
         try {
             const res = await axiosInstance.get(`/users/${keyword}`)
             const user = res?.data?.user;
-            console.log("thong tin user", res)
             setChats(user ? [{ ...user, chatId: res?.data?.chatId }] : []);
             setHasMore(false);
         } catch (err) {
