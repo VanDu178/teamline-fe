@@ -14,15 +14,11 @@
   box-sizing: border-box; 
 }
 
-
-
-/* Avatar container */
 .avatar-container {
   position: relative;
   margin-bottom: 1rem;
 }
 
-/* Avatar styles */
 .avatar {
   margin: 0px !important;
   border-radius: 50%;
@@ -39,7 +35,6 @@
   box-shadow: 0 0 10px rgba(30, 144, 255, 0.5);
 }
 
-/* Avatar box */
 .avatar-box {
   position: absolute;
   top: 30px;
@@ -49,7 +44,7 @@
   box-shadow: var(--shadow);
   padding: 0.5rem 0;
   min-width: 150px;
-  z-index: 10;
+  z-index: 1;
   animation: fadeIn 0.2s ease-in-out;
 }
 
@@ -73,7 +68,6 @@
   transform: translateX(1px);
 }
 
-/* Icon styles */
 .icon {
   padding: 6px;
   border-radius: 3px;
@@ -102,7 +96,6 @@
   font-weight: bold;
 }
 
-/* Notification Sidebar */
 .notif-sidebar {
   position: absolute;
   top: 0;
@@ -112,7 +105,7 @@
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
   transition: right 0.3s ease;
   background-color: var(--background-tertiary);
-  z-index: 10;
+  z-index: 1;
   height: 100vh; 
   display: flex; 
   flex-direction: column;
@@ -120,7 +113,7 @@
 }
 
 .notif-sidebar.open {
-  right: 0; /* Hiện khi mở */
+  right: 0;
 }
 
 .notif-header {
@@ -136,53 +129,16 @@
 }
 
 .notif-body {
-  padding: 0.5rem;
-  overflow-y: auto;
-  max-height: calc(100% - 10%);
+   overflow-y: auto;
+    max-height: calc(100% - 10%);
+    position: relative; /* Thêm dòng này */
+    z-index: 0; /* Thêm dòng này */
 }
 
 .notif-list {
   list-style: none;
   margin: 0;
   padding: 0;
-}
-
-
-/* Existing styles for .notif-item */
-.notif-item {
-  display: flex;
-  flex-direction: column;
-  padding: 0.75rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.notif-item:hover {
-  background-color: var(--background-hover-secondary);
-}
-
-/* Green dot for unread notifications */
-.notif-item.unread .notif-message::after {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background-color: #22c55e; /* Green color */
-  border-radius: 50%;
-  margin-left: 8px;
-  vertical-align: middle;
-}
-
-/* Existing styles for notification message and time */
-.notif-message {
-  font-size: 0.9rem;
-  color: var(--text-primary);
-}
-
-.notif-time {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: 0.25rem;
 }
 
 .notif-empty {
@@ -192,7 +148,6 @@
   padding: 1rem;
 }
 
-/* Animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -204,7 +159,6 @@
   }
 }
 
-/* Responsive adjustments */
 @media (max-width: 767px) {
   .leftsidebar {
     width: 100%;
@@ -252,12 +206,6 @@
   }
   .notif-header h3 {
     font-size: 1rem;
-  }
-  .notif-message {
-    font-size: 0.85rem;
-  }
-  .notif-time {
-    font-size: 0.7rem;
   }
 }
 
