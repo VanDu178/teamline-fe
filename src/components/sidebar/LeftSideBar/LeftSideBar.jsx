@@ -26,17 +26,22 @@ const LeftSideBar = () => {
     const [cursor, setCursor] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const loadMoreRef = useRef();
+    const notificationsToMarkReadRef = useRef(new Set());
+
+    //Dùng để xử lý cho useEffect gọi auto mark sau khi noti box đóng.
+    //Yêu cầu là chỉ cập nhật isRead sau khi notiBox đóng 
+    const didMountRef = useRef(false);
+    const prevIsNotificationOpenRef = useRef(isNotificationOpen);
 
 
     //Xử lý khi click ra bên ngoài
     useEffect(() => {
+        // axiosInstance.post("/notifications/mark-all-read");
         const handleClickOutside = (event) => {
             if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
                 setIsAvataOpen(false);
                 setActiveIcon(null);
                 setIsNotificationOpen(false);
-                // setNotificationCount(0);
-                // notificationCountRef.current = 0;
                 setCursor(null);
             }
         };
@@ -46,7 +51,92 @@ const LeftSideBar = () => {
         };
     }, []);
 
-    // Mở notification lần đầu:
+
+
+
+    //Xử lý auto-read cho noti (noti nào hiển thị trên viewport lớn hơn 2 giây sẽ tính là đã đọc)
+    //Sử dụng IntersectionObserver + setTimeout để theo dõi thời gian hiển thị
+    useEffect(() => {
+        if (!isNotificationOpen || notifications.length === 0) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        // Bắt đầu đếm 5 giây khi thông báo vào viewport
+                        const notificationId = entry.target.dataset.notificationId;
+                        const timer = setTimeout(() => {
+                            notificationsToMarkReadRef.current.add(notificationId); // Lưu vào Set
+                            observer.unobserve(entry.target); // Ngừng theo dõi
+                        }, 5000);
+
+                        entry.target.timer = timer; // Lưu timer để hủy nếu cần
+                    } else {
+                        // Hủy timer nếu thông báo rời viewport trước 2 giây
+                        if (entry.target.timer) {
+                            clearTimeout(entry.target.timer);
+                            entry.target.timer = null;
+                        }
+                    }
+                });
+            },
+            { threshold: 0.5 } // 50% thông báo hiển thị thì tính là "đã xem"
+        );
+
+        // Theo dõi tất cả thông báo
+        const notificationElements = document.querySelectorAll(".notif-item");
+        notificationElements.forEach((el) => observer.observe(el));
+
+        // Cleanup
+        return () => {
+            notificationElements.forEach((el) => {
+                if (el.timer) clearTimeout(el.timer);
+                observer.unobserve(el);
+            });
+        };
+    }, [isNotificationOpen, notifications]);
+
+
+    useEffect(() => {
+        if (!didMountRef.current) {
+            didMountRef.current = true;
+            prevIsNotificationOpenRef.current = isNotificationOpen;
+            return;
+        }
+
+        // Kiểm tra khi chuyển từ mở -> đóng
+        if (prevIsNotificationOpenRef.current === true && isNotificationOpen === false) {
+            console.log("Notification box vừa được đóng");
+
+            if (notificationsToMarkReadRef.current.size > 0) {
+                const notificationIds = Array.from(notificationsToMarkReadRef.current);
+                markNotificationsAsRead(notificationIds)
+                    .then(() => {
+                        setNotificationCount(prev => prev - notificationsToMarkReadRef.current.size);
+                        notificationsToMarkReadRef.current.clear();
+                    })
+                    .catch(error => {
+                        console.error("Error handling notifications:", error);
+                    });
+            }
+        }
+
+        // Cập nhật trạng thái trước đó
+        prevIsNotificationOpenRef.current = isNotificationOpen;
+    }, [isNotificationOpen]);
+
+    //Hàm gọi để đánh dấu noti đã được đọc
+    const markNotificationsAsRead = async (notificationIds) => {
+        try {
+            console.log("Danh sách noti", notificationIds)
+            await axiosInstance.post("/notifications/mark-read", { notificationIds: Array.from(notificationIds) });
+            // Không cần cập nhật UI ngay lập tức (vì notibox đã đóng)
+        } catch (error) {
+            console.error("Failed to mark notifications as read:", error);
+        }
+    };
+
+
+    // Load notification lần đầu:
     useEffect(() => {
         if (isNotificationOpen) {
             setNotifications([]);
@@ -56,6 +146,15 @@ const LeftSideBar = () => {
     }, [isNotificationOpen]);
 
 
+    //Cập nhật notificationref mỗi khi notification thay đổi
+    useEffect(() => {
+        notificationRef.current = notifications;
+    }, [notifications]);
+
+    //Cập nhật notificationCountRef mỗi khi notificationCount thay đổi
+    useEffect(() => {
+        notificationCountRef.current = notificationCount;
+    }, [notificationCount]);
 
     //Xử lý khi phần tử được theo dõi hiển thị trong viewport thì sẽ xử lý load thêm 
     useEffect(() => {
@@ -74,10 +173,10 @@ const LeftSideBar = () => {
 
     //Xử lý load danh sách notification 
     const fetchNotifications = async (cursor = null) => {
-        console.log("called")
         const params = { limit: 10 };
         if (cursor) params.cursor = cursor;
         const res = await axiosInstance.get("/notifications", { params });
+        console.log(res.data);
         return res.data;
     };
 
@@ -88,12 +187,12 @@ const LeftSideBar = () => {
         if (cursor) {
             setNotifications(prev => {
                 const updated = [...prev, ...data.items];
-                notificationRef.current = updated;
+                // notificationRef.current = updated;
                 return updated;
             });
         } else {
             setNotifications(data.items);
-            notificationRef.current = data.items;
+            // notificationRef.current = data.items;
         }
 
         setCursor(data.nextCursor);
@@ -108,11 +207,14 @@ const LeftSideBar = () => {
         if (iconName !== "avatar" && isAvataOpen) {
             setIsAvataOpen(false);
         }
+
+        //nếu click notification thì thực hiện 
         if (iconName === "notification") {
             if (!isNotificationOpen) {
                 setCursor(null)
                 // setNotificationCount(0); 
             }
+            //toggle notification box
             setIsNotificationOpen(!isNotificationOpen);
             //reset số lượng thông báo về lại bằng 0 khi đóng khung thông báo 
             //sau này có thể xử lý theo logic khác
@@ -120,6 +222,9 @@ const LeftSideBar = () => {
         }
         setActiveIcon(activeIcon === iconName ? null : iconName);
     };
+
+
+
 
     //Avatar user 
     const handleAvatarClick = () => {
@@ -225,7 +330,7 @@ const LeftSideBar = () => {
                         {notifications.length > 0 ? (
                             <ul className="notif-list">
                                 {notifications.map((notif) => (
-                                    <li key={notif._id} className="notif-item">
+                                    <li key={notif._id} data-notification-id={notif._id} className={`notif-item ${!notif.isRead ? 'unread' : ''}`}>
                                         <span className="notif-message">{notif.message}</span>
                                         <span className="notif-time">{notif.createdAt}</span>
                                     </li>

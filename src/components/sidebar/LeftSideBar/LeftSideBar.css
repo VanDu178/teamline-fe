@@ -147,6 +147,8 @@
   padding: 0;
 }
 
+
+/* Existing styles for .notif-item */
 .notif-item {
   display: flex;
   flex-direction: column;
@@ -156,9 +158,22 @@
 }
 
 .notif-item:hover {
-  background-color:var(--background-hover-secondary);
+  background-color: var(--background-hover-secondary);
 }
 
+/* Green dot for unread notifications */
+.notif-item.unread .notif-message::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: #22c55e; /* Green color */
+  border-radius: 50%;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Existing styles for notification message and time */
 .notif-message {
   font-size: 0.9rem;
   color: var(--text-primary);
