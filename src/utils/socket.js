@@ -211,10 +211,29 @@ export const registerSocketEvents = (socket) => {
     );
   });
 
-  socket.on("notification-new", (data) => {
-    //Thông báo chuông
-    //Cập nhật số lượng thông báo trên giao diện (nếu người dùng không đang trong box thông báo)
-    //Popup thông báo mới (nếu ngươi dùng đang trong box thông báo)
+  socket.on("notification-new", (newNotification) => {
+    const isNotificationOpen =
+      document.querySelector(".notif-sidebar") !== null;
+
+    if (isNotificationOpen) {
+      // Nếu khung thông báo đang mở, hiển thị ngay thông báo mới lên đầu
+      chatStore.setNotifications((prev) => [newNotification, ...prev]);
+
+      // Optionally: có thể dùng toast popup ở đây để thu hút sự chú ý
+      // toast.info("Bạn có thông báo mới");
+    }
+    //  else {
+    //   // Nếu đóng, tăng số lượng thông báo chờ
+    //   chatStore.notificationCountRef.current =
+    //     (chatStore.notificationCountRef.current || 0) + 1;
+    //   chatStore.setNotificationCount(chatStore.notificationCountRef.current);
+    // }
+
+    // Cập nhật danh sách trong ref (để giữ nhất quán)
+    chatStore.notificationRef.current = [
+      newNotification,
+      ...chatStore.notificationRef.current,
+    ];
   });
 
   socket.on("error", ({ message }) => {
