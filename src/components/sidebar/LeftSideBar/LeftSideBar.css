@@ -2,15 +2,19 @@
   width: 60px;
   background-color: var(--background-secondary);
   color: var(--text-primary);
-  padding: 1rem;
+  padding: 3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
+  min-height: 100vh; 
+  max-height: 100vh; 
   transition: background-color 0.3s ease, color 0.3s ease;
   border-right: 1px solid var(--border-color);
-  position: relative; /* Để định vị khung thông báo */
+  position: relative;
+  box-sizing: border-box; 
 }
+
+
 
 /* Avatar container */
 .avatar-container {
@@ -102,14 +106,17 @@
 .notif-sidebar {
   position: absolute;
   top: 0;
-  right: -330px; /* Ẩn ban đầu */
-  width: 330px;
-  height: 100vh;
-  background-color: var(--background-tertiary);
+  right: -300px; 
+  width: 300px;
   border-left: 1px solid var(--border-color);
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
   transition: right 0.3s ease;
+  background-color: var(--background-tertiary);
   z-index: 10;
+  height: 100vh; 
+  display: flex; 
+  flex-direction: column;
+  overflow: hidden; 
 }
 
 .notif-sidebar.open {
@@ -119,6 +126,7 @@
 .notif-header {
   padding: 1rem;
   border-bottom: 1px solid var(--border-color-primary);
+  height: 10%;
 }
 
 .notif-header h3 {
@@ -130,7 +138,7 @@
 .notif-body {
   padding: 0.5rem;
   overflow-y: auto;
-  height: calc(100% - 60px); /* Chiều cao trừ đi header */
+  max-height: calc(100% - 10%);
 }
 
 .notif-list {

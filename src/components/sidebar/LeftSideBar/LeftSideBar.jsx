@@ -18,38 +18,26 @@ const LeftSideBar = () => {
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [messageCount, setMessageCount] = useState(3); // giả lập số lượng tin nhắn
-    const [notificationCount, setNotificationCount] = useState(5); // giả lập số lượng thông báo
     const [activeIcon, setActiveIcon] = useState(null);
-    const { setChats, chatsRef, setMessages, notifications, setNotifications } = useChat();
+    const { setChats, chatsRef, setMessages, notifications, setNotifications, notificationCount, setNotificationCount, notificationCountRef, notificationRef } = useChat();
     const { user, setUser, setIsAuthenticated, setUserId } = useAuth();
     const { isDarkMode, toggleTheme } = useTheme();
     const sidebarRef = useRef(null);
+    const [cursor, setCursor] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const loadMoreRef = useRef();
 
-    // const notifications = [
-    //     { id: 1, message: "Bạn được Trường thêm vào nhóm tìm việc làm nodejs", time: "10:00 AM" },
-    //     { id: 2, message: "Bạn có yêu cầu kết bạn từ Nguyễn Trung Trực", time: "09:30 AM" },
-    //     { id: 3, message: "Đặng Trung Lợi đã thêm bạn vào nhóm", time: "08:15 AM" },
-    //     { id: 4, message: "Thông báo hệ thống: Cập nhật phiên bản mới", time: "Hôm qua" },
-    //     { id: 5, message: "Nâng cấp cơ chế bảo mật", time: "2 ngày trước" },
-    //     { id: 1, message: "Bạn được Trường thêm vào nhóm tìm việc làm nodejs", time: "10:00 AM" },
-    //     { id: 2, message: "Bạn có yêu cầu kết bạn từ Nguyễn Trung Trực", time: "09:30 AM" },
-    //     { id: 3, message: "Đặng Trung Lợi đã thêm bạn vào nhóm", time: "08:15 AM" },
-    //     { id: 4, message: "Thông báo hệ thống: Cập nhật phiên bản mới", time: "Hôm qua" },
-    //     { id: 5, message: "Nâng cấp cơ chế bảo mật", time: "2 ngày trước" },
-    //     { id: 1, message: "Bạn được Trường thêm vào nhóm tìm việc làm nodejs", time: "10:00 AM" },
-    //     { id: 2, message: "Bạn có yêu cầu kết bạn từ Nguyễn Trung Trực", time: "09:30 AM" },
-    //     { id: 3, message: "Đặng Trung Lợi đã thêm bạn vào nhóm", time: "08:15 AM" },
-    //     { id: 4, message: "Thông báo hệ thống: Cập nhật phiên bản mới", time: "Hôm qua" },
-    //     { id: 5, message: "Nâng cấp cơ chế bảo mật", time: "2 ngày trước" },
-    // ];
 
+    //Xử lý khi click ra bên ngoài
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
                 setIsAvataOpen(false);
                 setActiveIcon(null);
-                setIsNotificationOpen(false); //Đóng khung thông báo 
-                setNotificationCount(0); //Set số lượng thông báo về 0
+                setIsNotificationOpen(false);
+                // setNotificationCount(0);
+                // notificationCountRef.current = 0;
+                setCursor(null);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -58,13 +46,73 @@ const LeftSideBar = () => {
         };
     }, []);
 
+    // Mở notification lần đầu:
+    useEffect(() => {
+        if (isNotificationOpen) {
+            setNotifications([]);
+            setCursor(null);
+            loadMore();
+        }
+    }, [isNotificationOpen]);
+
+
+
+    //Xử lý khi phần tử được theo dõi hiển thị trong viewport thì sẽ xử lý load thêm 
+    useEffect(() => {
+        if (!isNotificationOpen) return;
+        const observer = new IntersectionObserver(entries => {
+
+            if (entries[0].isIntersecting && !isLoading && cursor !== null) {
+                loadMore();
+            }
+        });
+        if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+        return () => observer.disconnect();
+    }, [isLoading, cursor, isNotificationOpen]);
+
+
+
+    //Xử lý load danh sách notification 
+    const fetchNotifications = async (cursor = null) => {
+        console.log("called")
+        const params = { limit: 10 };
+        if (cursor) params.cursor = cursor;
+        const res = await axiosInstance.get("/notifications", { params });
+        return res.data;
+    };
+
+    const loadMore = async () => {
+        setIsLoading(true);
+        const data = await fetchNotifications(cursor);
+
+        if (cursor) {
+            setNotifications(prev => {
+                const updated = [...prev, ...data.items];
+                notificationRef.current = updated;
+                return updated;
+            });
+        } else {
+            setNotifications(data.items);
+            notificationRef.current = data.items;
+        }
+
+        setCursor(data.nextCursor);
+        setIsLoading(false);
+    };
+
+
+
+
 
     const handleIconClick = (iconName) => {
         if (iconName !== "avatar" && isAvataOpen) {
             setIsAvataOpen(false);
         }
         if (iconName === "notification") {
-            if (!isNotificationOpen) setNotificationCount(0);
+            if (!isNotificationOpen) {
+                setCursor(null)
+                // setNotificationCount(0); 
+            }
             setIsNotificationOpen(!isNotificationOpen);
             //reset số lượng thông báo về lại bằng 0 khi đóng khung thông báo 
             //sau này có thể xử lý theo logic khác
@@ -177,11 +225,16 @@ const LeftSideBar = () => {
                         {notifications.length > 0 ? (
                             <ul className="notif-list">
                                 {notifications.map((notif) => (
-                                    <li key={notif.id} className="notif-item">
+                                    <li key={notif._id} className="notif-item">
                                         <span className="notif-message">{notif.message}</span>
-                                        <span className="notif-time">{notif.time}</span>
+                                        <span className="notif-time">{notif.createdAt}</span>
                                     </li>
                                 ))}
+                                {cursor && (
+                                    <li ref={loadMoreRef} className="notif-load-more">
+                                        {isLoading ? "Đang tải…" : "Scroll để tải thêm"}
+                                    </li>
+                                )}
                             </ul>
                         ) : (
                             <p className="notif-empty">Không có thông báo nào.</p>
