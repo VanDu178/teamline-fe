@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import LeftSidebar from "../../components/sidebar/LeftSideBar/LeftSideBar";
+import LeftSidebar from "../../components/sidebar/LeftSideBar/index";
 import ChatList from "../../components/chat/ChatList/ChatList";
 import RightSideBar from "../../components/sidebar/RightSideBar/RightSideBar";
 import ChatBox from "../../components/chatbox/ChatBox";
@@ -16,7 +16,7 @@ export let joinRoomFunction = null;
 
 const Main = () => {
     const { isAuthenticated } = useAuth();
-    const { setMessages, roomId, roomIdRef, setChats, chatsRef, setRoomId, isSearchingRef } = useChat();
+    const { setMessages, roomId, roomIdRef, setChats, chatsRef, setRoomId, isSearchingRef, isNotificationOpenRef, setNotifications, notificationCountRef, setNotificationCount } = useChat();
     const [showChat, setShowChat] = useState(false);
 
     const joinRoom = () => {
@@ -33,7 +33,7 @@ const Main = () => {
     useEffect(() => {
         if (isAuthenticated) {
             connectSocket();
-            setChatStore({ setMessages, roomIdRef, setChats, chatsRef, setRoomId, isSearchingRef });
+            setChatStore({ setMessages, roomIdRef, setChats, chatsRef, setRoomId, isSearchingRef, isNotificationOpenRef, setNotifications, notificationCountRef, setNotificationCount });
             // set store và tự động register luôn ở đây
         }
         return () => {
