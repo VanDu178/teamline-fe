@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
 import { handleTokenExpired } from "../configs/socketEmitter";
 import axiosInstance from "../configs/axiosInstance";
+import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 
 let socket = null;
@@ -53,6 +54,10 @@ export const registerSocketEvents = (socket) => {
     chatsRef,
     setRoomId,
     isSearchingRef,
+    isNotificationOpenRef,
+    setNotifications,
+    notificationCountRef,
+    setNotificationCount,
   } = chatStore;
   //Hàm update chats dùng chung cho các event
   const updateChatList = async ({
@@ -212,28 +217,13 @@ export const registerSocketEvents = (socket) => {
   });
 
   socket.on("notification-new", (newNotification) => {
-    const isNotificationOpen =
-      document.querySelector(".notif-sidebar") !== null;
-
-    if (isNotificationOpen) {
-      // Nếu khung thông báo đang mở, hiển thị ngay thông báo mới lên đầu
-      chatStore.setNotifications((prev) => [newNotification, ...prev]);
-
-      // Optionally: có thể dùng toast popup ở đây để thu hút sự chú ý
-      // toast.info("Bạn có thông báo mới");
+    if (isNotificationOpenRef.current === true) {
+      setNotifications((prev) => [newNotification, ...prev]);
+      toast.info("Bạn có thông báo mới");
+      //Xử lý thêm số lượng notificationCount lên
     }
-    //  else {
-    //   // Nếu đóng, tăng số lượng thông báo chờ
-    //   chatStore.notificationCountRef.current =
-    //     (chatStore.notificationCountRef.current || 0) + 1;
-    //   chatStore.setNotificationCount(chatStore.notificationCountRef.current);
-    // }
-
-    // Cập nhật danh sách trong ref (để giữ nhất quán)
-    chatStore.notificationRef.current = [
-      newNotification,
-      ...chatStore.notificationRef.current,
-    ];
+    // notificationCountRef.current = (notificationCountRef.current || 0) + 1;
+    setNotificationCount((prev) => prev + 1);
   });
 
   socket.on("error", ({ message }) => {

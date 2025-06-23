@@ -43,9 +43,10 @@ const NotificationItem = ({ notification, onDelete }) => {
     };
     return (
         <li
-            data-notification-id={notification._id}
+            data-notification-info={JSON.stringify({ notificationId: notification._id, isRead: notification.isRead })}
             className={`notif-item ${!notification.isRead ? 'unread' : ''}`}
         >
+
             <div className="notif-icon-container">
                 {getIcon()}
             </div>
@@ -53,7 +54,7 @@ const NotificationItem = ({ notification, onDelete }) => {
                 <div className="notif-message">{notification.message}</div>
                 <div className="notif-meta">
                     <span className="notif-time">
-                        notification.createdAt
+                        {notification.createdAt}
                     </span>
                 </div>
             </div>

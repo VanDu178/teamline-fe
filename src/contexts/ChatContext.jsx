@@ -14,6 +14,7 @@ export const ChatProvider = ({ children }) => {
     const [notificationCount, setNotificationCount] = useState(null);
     const notificationRef = useRef([]);
     const notificationCountRef = useRef(null)
+    const isNotificationOpenRef = useRef(false);
 
 
 
@@ -42,7 +43,8 @@ export const ChatProvider = ({ children }) => {
                 notificationRef,
                 notificationCount,
                 setNotificationCount,
-                notificationCountRef
+                notificationCountRef,
+                isNotificationOpenRef
             }}
         >
             {children}
