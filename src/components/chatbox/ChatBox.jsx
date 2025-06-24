@@ -186,7 +186,7 @@ const ChatBox = () => {
             setReplyMessage(null); // Xóa tin nhắn reply sau khi gửi
             setTextAreaRows(1); // Reset số dòng textarea
         } else {
-            alert('Vui lòng nhập tin nhắn và ID người nhận');
+            console.log('Vui lòng nhập tin nhắn và ID người nhận');
         }
     };
 

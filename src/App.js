@@ -2,6 +2,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ChatProvider } from "./contexts/ChatContext";
 import { ToastContainer } from "react-toastify";
+import { initSoundPlayer } from "./utils/soundPlayer";
 import AppRoutes from "./routes";
 import "./App.css";
 import "react-toastify/dist/ReactToastify.css";
