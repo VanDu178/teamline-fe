@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
 import { handleTokenExpired } from "../configs/socketEmitter";
 import axiosInstance from "../configs/axiosInstance";
+import { playSound } from "../utils/soundPlayer";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 
@@ -72,9 +73,7 @@ export const registerSocketEvents = (socket) => {
       );
       return;
     }
-    console.log("co chay vao ham nay, va searing hien tai khong co");
     const chats = chatsRef?.current || [];
-    console.log("cáda", chats);
     const existingIndex = chats.findIndex((c) => c._id === chatId);
     if (existingIndex !== -1) {
       const updatedChat = {
@@ -105,7 +104,7 @@ export const registerSocketEvents = (socket) => {
   };
 
   socket.on("received-message", async (msg) => {
-    console.log("msg", msg);
+    playSound();
     if (msg.sender === userId) return;
     const roomId = roomIdRef?.current;
     // Nếu đang trong phòng chat đó, thêm tin nhắn
@@ -185,6 +184,7 @@ export const registerSocketEvents = (socket) => {
   });
 
   socket.on("group-new", ({ newGroup }) => {
+    playSound();
     const chats = chatsRef?.current || [];
     const exists = chats.some((chat) => chat._id === newGroup._id);
     if (exists) return;
@@ -217,12 +217,11 @@ export const registerSocketEvents = (socket) => {
   });
 
   socket.on("notification-new", (newNotification) => {
+    playSound();
     if (isNotificationOpenRef.current === true) {
       setNotifications((prev) => [newNotification, ...prev]);
       toast.info("Bạn có thông báo mới");
-      //Xử lý thêm số lượng notificationCount lên
     }
-    // notificationCountRef.current = (notificationCountRef.current || 0) + 1;
     setNotificationCount((prev) => prev + 1);
   });
 

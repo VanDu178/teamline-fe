@@ -9,6 +9,7 @@ import imgGroupDefault from "../../../assets/images/img-group-default.jpg";
 import imgUserDefault from "../../../assets/images/img-user-default.jpg";
 import CreateGroupModal from "../../modal/CreateGroupModal/CreateGroupModal";
 import { getSocket } from "../../../utils/socket";
+import { emitSocketEvent } from '../../../configs/socketEmitter';
 import { toast } from "react-toastify";
 import "./ChatList.css";
 
@@ -53,7 +54,8 @@ const ChatList = () => {
 
     const handleCreateGroup = async (groupData) => {
         try {
-            currentSocket.emit("group-created", groupData, (response) => {
+            const res = emitSocketEvent('group-created', groupData);
+            res.then((response) => {
                 if (response?.error) {
                     toast.error("Tạo nhóm thất bại!");
                     console.error("Lỗi từ server:", response?.error);
@@ -63,7 +65,7 @@ const ChatList = () => {
                     toast.success("Đã tạo nhóm thành công!");
                     console.log("Phản hồi server:", response?.data);
                 }
-            });
+            })
         } catch (error) {
             toast.error("Tạo nhóm thất bại!");
             console.error("Lỗi tạo nhóm:", error);
