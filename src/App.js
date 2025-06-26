@@ -6,27 +6,30 @@ import { initSoundPlayer } from "./utils/soundPlayer";
 import AppRoutes from "./routes";
 import "./App.css";
 import "react-toastify/dist/ReactToastify.css";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 function App() {
   return (
     <ChatProvider>
-      <div className="App">
-        <AuthProvider>
-          <ThemeProvider>
-            <AppRoutes />
-          </ThemeProvider>
-        </AuthProvider>
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          pauseOnHover
-          draggable
-          theme="light"
-        />
-      </div>
+      <NotificationProvider>
+        <div className="App">
+          <AuthProvider>
+            <ThemeProvider>
+              <AppRoutes />
+            </ThemeProvider>
+          </AuthProvider>
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            pauseOnHover
+            draggable
+            theme="light"
+          />
+        </div>
+      </NotificationProvider>
     </ChatProvider>
   );
 }

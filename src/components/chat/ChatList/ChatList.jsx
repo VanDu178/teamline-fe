@@ -54,6 +54,7 @@ const ChatList = () => {
 
     const handleCreateGroup = async (groupData) => {
         try {
+            console.log("đã gọi hàm tạo group")
             const res = emitSocketEvent('group-created', groupData);
             res.then((response) => {
                 if (response?.error) {
@@ -205,11 +206,11 @@ const ChatList = () => {
                 </div>
             ) : (
                 <div className="chatlist-content" ref={listRef}>
-                    {chats.map((item) => {
+                    {chats?.map((item) => {
                         if (searchDone) {
                             return (
                                 <UserItem
-                                    key={item._id}
+                                    key={item?._id}
                                     name={item?.name}
                                     avatar={item?.avatar || imgUserDefault}
                                     userId={item?._id}
@@ -220,20 +221,20 @@ const ChatList = () => {
 
                         const otherUser =
                             item?.type === "private"
-                                ? item?.members?.find((member) => member._id.toString() !== user._id.toString())
+                                ? item?.members?.find((member) => member?._id.toString() !== user?._id?.toString())
                                 : null;
 
 
                         const readed = item?.lastMessage?.seenBy?.some(
-                            (seenUser) => seenUser._id.toString() === user._id.toString()
+                            (seenUser) => seenUser?._id?.toString() === user?._id?.toString()
                         );
 
                         return (
                             <ChatItem
-                                key={item._id}
+                                key={item?._id}
                                 name={
                                     otherUser ? (
-                                        otherUser.name
+                                        otherUser?.name
                                     ) : (
                                         <>
                                             <HiMiniUserGroup style={{ marginRight: 6 }} />
@@ -243,8 +244,8 @@ const ChatList = () => {
                                 }
                                 avatar={
                                     otherUser
-                                        ? otherUser.avatar && otherUser.avatar.trim() !== ""
-                                            ? otherUser.avatar
+                                        ? otherUser?.avatar && otherUser?.avatar?.trim() !== ""
+                                            ? otherUser?.avatar
                                             : imgUserDefault
                                         : imgGroupDefault
                                 }

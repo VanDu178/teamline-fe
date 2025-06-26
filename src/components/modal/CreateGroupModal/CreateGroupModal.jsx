@@ -159,7 +159,8 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate }) => {
         onCreate({
             name: groupName.trim(),
             knownUsers,
-            unknownUsers
+            unknownUsers,
+            currentUserName: user.name,
         });
 
         handleClose();

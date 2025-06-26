@@ -1,11 +1,10 @@
-import React from "react";
 import './RightSideBar.css';
 
 const RightSidebar = () => (
     <div className="right-sidebar">
         <div className="user-info">
             <img
-                src="https://via.placeholder.com/40"
+                src="#"
                 alt="User avatar"
                 className="user-avatar"
             />

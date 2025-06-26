@@ -6,6 +6,7 @@ import RightSideBar from "../../components/sidebar/RightSideBar/RightSideBar";
 import ChatBox from "../../components/chatbox/ChatBox";
 import { useAuth } from "../../contexts/AuthContext";
 import { useChat } from "../../contexts/ChatContext";
+import { useNotification } from "../../contexts/NotificationContext";
 import { connectSocket, disconnectSocket, registerSocketEvents, setChatStore } from '../../utils/socket';
 import { emitSocketEvent } from '../../configs/socketEmitter';
 import { isLocalChatId } from '../../utils/chatIdUtils';
@@ -16,7 +17,8 @@ export let joinRoomFunction = null;
 
 const Main = () => {
     const { isAuthenticated } = useAuth();
-    const { setMessages, roomId, roomIdRef, setChats, chatsRef, setRoomId, isSearchingRef, isNotificationOpenRef, setNotifications, notificationCountRef, setNotificationCount } = useChat();
+    const { setMessages, roomId, roomIdRef, setChats, chatsRef, setRoomId, isSearchingRef } = useChat();
+    const { isNotificationOpenRef, setNotifications, notificationCountRef, setNotificationCount, notifications, notificationRef } = useNotification();
     const [showChat, setShowChat] = useState(false);
 
     const joinRoom = () => {
@@ -33,7 +35,7 @@ const Main = () => {
     useEffect(() => {
         if (isAuthenticated) {
             connectSocket();
-            setChatStore({ setMessages, roomIdRef, setChats, chatsRef, setRoomId, isSearchingRef, isNotificationOpenRef, setNotifications, notificationCountRef, setNotificationCount });
+            setChatStore({ setMessages, roomIdRef, setChats, chatsRef, setRoomId, isSearchingRef, isNotificationOpenRef, setNotifications, notificationCountRef, setNotificationCount, notifications, notificationRef });
             // set store và tự động register luôn ở đây
         }
         return () => {
