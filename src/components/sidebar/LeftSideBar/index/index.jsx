@@ -10,7 +10,7 @@ import { FaMessage } from "react-icons/fa6";
 import { useChat } from "../../../../contexts/ChatContext"
 import NotificationSidebar from "../components/NotificationSidebar/NotificationSidebar"
 import AvatarMenu from "../components/AvatarMenu/AvatarMenu"
-import useNotificationHandler from "../hooks/useNotificationHandler";
+import useNotificationBoxHandler from "../hooks/useNotificationBoxHandler";
 import useAvatarMenu from "../hooks/useAvatarMenu";
 import "./index.css";
 
@@ -34,7 +34,7 @@ const LeftSideBar = () => {
         isLoading,
         loadMoreRef,
         handleDeleteNotification
-    } = useNotificationHandler();
+    } = useNotificationBoxHandler();
 
 
     const { isAvataOpen, setIsAvataOpen, handleAvatarClick, handleOpenUserInfoModal, handleCloseSettingsModal, handleOpenSettingModal } = useAvatarMenu({

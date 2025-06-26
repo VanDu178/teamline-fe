@@ -423,7 +423,7 @@ const ChatBox = () => {
                 <div className="chat-header">
                     <div className="header-left">
                         <div className="avatar">
-                            <img src="https://via.placeholder.com/40" alt="avatar" />
+                            <img src="#" alt="avatar" />
                         </div>
                         <div className="header-info">
                             <h3>Chat-app-team</h3>

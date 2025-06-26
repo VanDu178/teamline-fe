@@ -59,6 +59,8 @@ export const registerSocketEvents = (socket) => {
     setNotifications,
     notificationCountRef,
     setNotificationCount,
+    notificationRef,
+    notifications,
   } = chatStore;
   //Hàm update chats dùng chung cho các event
   const updateChatList = async ({
@@ -67,12 +69,6 @@ export const registerSocketEvents = (socket) => {
     axiosInstance,
     setChats,
   }) => {
-    if (isSearchingRef.current) {
-      console.log(
-        "Sau này sẽ tạo thông báo chuông + thông báo có tin nhắn đang chờ ở đây"
-      );
-      return;
-    }
     const chats = chatsRef?.current || [];
     const existingIndex = chats.findIndex((c) => c._id === chatId);
     if (existingIndex !== -1) {
@@ -90,9 +86,7 @@ export const registerSocketEvents = (socket) => {
       setChats(newChats);
     } else {
       try {
-        console.log("co chay vao ham gọi chat");
         const res = await axiosInstance.get(`/chats/${chatId}`);
-        console.log("da cahy vao day", res);
         const newChat = res?.data;
         if (newChat) {
           setChats((prev) => [newChat, ...prev]);
@@ -111,12 +105,14 @@ export const registerSocketEvents = (socket) => {
     if (msg?.chat?._id === roomId) {
       setMessages((prev) => [...prev, msg]);
     }
-    await updateChatList({
-      chatId: msg?.chat?._id,
-      lastMessage: msg,
-      axiosInstance,
-      setChats,
-    });
+    if (!isSearchingRef.current) {
+      await updateChatList({
+        chatId: msg?.chat?._id,
+        lastMessage: msg,
+        axiosInstance,
+        setChats,
+      });
+    }
   });
 
   socket.on("message-sent", async (data) => {
@@ -132,16 +128,19 @@ export const registerSocketEvents = (socket) => {
       localChatId,
     } = data;
 
-    await updateChatList({
-      chatId,
-      lastMessage: {
-        content: messageContent,
-        sender: messageSender,
-        createdAt: sentAt,
-      },
-      axiosInstance,
-      setChats,
-    });
+    if (!isSearchingRef.current) {
+      await updateChatList({
+        chatId,
+        lastMessage: {
+          content: messageContent,
+          sender: messageSender,
+          createdAt: sentAt,
+        },
+        axiosInstance,
+        setChats,
+      });
+    }
+
     if (localChatId === roomIdRef?.current) {
       console.log("chay tk này");
       setRoomId(chatId);
@@ -163,32 +162,17 @@ export const registerSocketEvents = (socket) => {
             : msg
         )
       );
-
-      //Nếu đang trong trạng thái search thì lúc này chỉ cần tạo thông báo thôi
-      // cập nhật danh sách chats
-
-      // cập nhật ref nếu có
-      // if (chatsRef?.current) {
-      //   chatsRef.current = chatsRef.current.filter((c) => c._id !== chatId);
-      //   const updated = {
-      //     ...chatsRef.current.find((c) => c._id === chatId),
-      //     lastMessage: {
-      //       content: "...",
-      //       sender: { _id: "self" },
-      //       createdAt: sentAt,
-      //     },
-      //   };
-      //   chatsRef.current = [updated, ...chatsRef.current];
-      // }
     }
   });
 
   socket.on("group-new", ({ newGroup }) => {
     playSound();
-    const chats = chatsRef?.current || [];
-    const exists = chats.some((chat) => chat._id === newGroup._id);
-    if (exists) return;
-    setChats((prev) => [newGroup, ...prev]);
+    if (!isSearchingRef.current) {
+      const chats = chatsRef?.current || [];
+      const exists = chats.some((chat) => chat._id === newGroup._id);
+      if (exists) return;
+      setChats((prev) => [newGroup, ...prev]);
+    }
   });
 
   socket.on("reaction-added", (data) => {
@@ -218,11 +202,46 @@ export const registerSocketEvents = (socket) => {
 
   socket.on("notification-new", (newNotification) => {
     playSound();
+
     if (isNotificationOpenRef.current === true) {
-      setNotifications((prev) => [newNotification, ...prev]);
+      const updatedNotifications = [
+        newNotification,
+        ...notificationRef.current,
+      ];
+      setNotifications(updatedNotifications);
       toast.info("Bạn có thông báo mới");
     }
-    setNotificationCount((prev) => prev + 1);
+
+    const currentCount = notificationCountRef.current ?? 0;
+    setNotificationCount(currentCount + 1);
+  });
+
+  socket.on("user-joined-group", async (data) => {
+    //Nó sẽ kêu 2 lần vì ngưởi gửi sự kiện accept cũng nhận sự kiện
+    playSound();
+    const { userId, userName, groupId } = data;
+    console.log(
+      "dữ liệu được gửi từ backend lên:",
+      userId,
+      "...",
+      userName,
+      "...",
+      groupId
+    );
+    // //check nếu noti và search không đanh mở thì cập nhật lại chatlist,
+    if (isSearchingRef.current) {
+      console.log(
+        "Sau này sẽ tạo thông báo chuông + thông báo có tin nhắn đang chờ ở đây"
+      );
+      return;
+    }
+    // //cập nhật chatlist ở đây
+    await updateChatList({
+      chatId: groupId,
+      lastMessage: null,
+      axiosInstance,
+      setChats,
+    });
   });
 
   socket.on("error", ({ message }) => {

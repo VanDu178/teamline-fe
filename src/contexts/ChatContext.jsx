@@ -10,12 +10,6 @@ export const ChatProvider = ({ children }) => {
     const [chats, setChats] = useState([]);
     const chatsRef = useRef([]);
     const isSearchingRef = useRef(false);
-    const [notifications, setNotifications] = useState([]);
-    const [notificationCount, setNotificationCount] = useState(null);
-    const notificationRef = useRef([]);
-    const notificationCountRef = useRef(null)
-    const isNotificationOpenRef = useRef(false);
-
 
 
     // Hàm set đồng bộ cả state và ref
@@ -38,13 +32,6 @@ export const ChatProvider = ({ children }) => {
                 setChats,
                 chatsRef,
                 isSearchingRef,
-                notifications,
-                setNotifications,
-                notificationRef,
-                notificationCount,
-                setNotificationCount,
-                notificationCountRef,
-                isNotificationOpenRef
             }}
         >
             {children}

@@ -1,21 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { BsThreeDotsVertical, BsReply, BsHeartFill, BsChatFill, BsTrash, BsArrowRepeat } from "react-icons/bs";
+import useNotificationHandler from "../../hooks/useNotificationHandler";
+
 import "./NotificationItem.css";
 
 const NotificationItem = ({ notification, onDelete }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef(null);
 
-    const getIcon = () => {
-        switch (notification.type) {
-            case "like":
-                return <BsHeartFill className="notif-icon" style={{ color: "#ef4444" }} />;
-            case "comment":
-                return <BsChatFill className="notif-icon" style={{ color: "#3b82f6" }} />;
-            default:
-                return <div className="notif-icon-default"></div>;
-        }
-    };
+    const {
+        acceptGroupInvite,
+        rejectGroupInvite
+    } = useNotificationHandler();
 
     // Đóng menu khi click bên ngoài
     useEffect(() => {
@@ -41,6 +37,11 @@ const NotificationItem = ({ notification, onDelete }) => {
         onDelete(notification._id);
         setIsMenuOpen(false);
     };
+
+
+
+    //Xử lý các sự kiện cho loại notification "lời mời vào nhóm chat"
+
     return (
         <li
             data-notification-info={JSON.stringify({ notificationId: notification._id, isRead: notification.isRead })}
@@ -48,10 +49,16 @@ const NotificationItem = ({ notification, onDelete }) => {
         >
 
             <div className="notif-icon-container">
-                {getIcon()}
+                <div className="notif-icon-default"></div>
             </div>
             <div className="notif-content">
                 <div className="notif-message">{notification.message}</div>
+                {notification?.type === "group_invite" && <div className="notif-action">
+                    <div>
+                        <button onClick={() => { rejectGroupInvite(notification?._id) }}>reject</button>
+                        <button onClick={() => { acceptGroupInvite(notification?.sourceId, notification?._id) }}>accept</button>
+                    </div>
+                </div>}
                 <div className="notif-meta">
                     <span className="notif-time">
                         {notification.createdAt}
