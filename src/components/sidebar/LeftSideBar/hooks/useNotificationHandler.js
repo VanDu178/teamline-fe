@@ -1,13 +1,20 @@
 import { emitSocketEvent } from "../../../../configs/socketEmitter";
 import { useAuth } from "../../../../contexts/AuthContext";
-import { useChat } from "../../../../contexts/ChatContext";
+import { useNotification } from "../../../../contexts/NotificationContext";
 import { toast } from "react-toastify";
 import axiosInstance from "../../../../configs/axiosInstance";
+import useNotificationBoxHandler from "./useNotificationBoxHandler";
 import Swal from "sweetalert2";
 
 const useNotificationHandler = () => {
   const { user } = useAuth();
-  const { setNotifications, setNotificationCount } = useChat();
+  const {
+    setNotifications,
+    notificationsToMarkReadRef,
+    notificationsToDismissRef,
+  } = useNotification();
+
+  const { handleDeleteNotification } = useNotificationBoxHandler();
 
   //Các hàm xử lý hành động cho loại notification "Gửi lời mời vào nhóm chat"
   const acceptGroupInvite = async (groupId, notifId) => {
@@ -17,11 +24,12 @@ const useNotificationHandler = () => {
       userName: user?.name,
     };
     try {
-      console.log("đã chạy sự kiện");
       const response = await emitSocketEvent("accept-group-invite", data);
+      console.log("gias trij trss", response);
       if (response?.error) {
         toast.error(response?.message);
       } else {
+        handleDeleteNotification(notifId);
         toast.success(response?.message);
       }
     } catch (err) {
@@ -30,6 +38,7 @@ const useNotificationHandler = () => {
   };
 
   const rejectGroupInvite = async (notifId) => {
+    notificationsToMarkReadRef.current.add(notifId);
     const result = await Swal.fire({
       title: "Từ chối lời mời?",
       text: "Bạn có chắc chắn muốn từ chối lời mời vào nhóm chat này không?",
@@ -46,7 +55,7 @@ const useNotificationHandler = () => {
           `/notifications/dismiss/${notifId}`
         );
         //cắt giá trị noti
-        setNotifications((prev) => prev.filter((n) => n._id !== notifId));
+        handleDeleteNotification(notifId);
         console.log("Đã từ chối lời mời, notifId:", notifId);
         toast.success("Đã từ chối lời mời.");
       } catch (err) {
