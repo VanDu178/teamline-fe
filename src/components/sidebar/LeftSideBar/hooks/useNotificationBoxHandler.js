@@ -42,7 +42,7 @@ const useNotificationBoxHandler = () => {
               const timer = setTimeout(() => {
                 notificationsToMarkReadRef.current.add(notificationId);
                 observer.unobserve(entry.target);
-              }, 5000);
+              }, 1000);
               entry.target.timer = timer;
             }
           } else {
@@ -202,7 +202,7 @@ const useNotificationBoxHandler = () => {
 
   const handleDeleteNotification = (notifId) => {
     notificationsToDismissRef.current.add(notifId);
-    getUnreadNotificationCount();
+    notificationsToMarkReadRef.current.add(notifId);
     setNotifications((prev) => prev.filter((n) => n._id !== notifId));
   };
 

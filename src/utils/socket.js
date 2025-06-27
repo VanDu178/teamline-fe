@@ -219,15 +219,7 @@ export const registerSocketEvents = (socket) => {
   socket.on("user-joined-group", async (data) => {
     //Nó sẽ kêu 2 lần vì ngưởi gửi sự kiện accept cũng nhận sự kiện
     playSound();
-    const { userId, userName, groupId } = data;
-    console.log(
-      "dữ liệu được gửi từ backend lên:",
-      userId,
-      "...",
-      userName,
-      "...",
-      groupId
-    );
+    const { userId, userName, group } = data;
     // //check nếu noti và search không đanh mở thì cập nhật lại chatlist,
     if (isSearchingRef.current) {
       console.log(
@@ -237,8 +229,8 @@ export const registerSocketEvents = (socket) => {
     }
     // //cập nhật chatlist ở đây
     await updateChatList({
-      chatId: groupId,
-      lastMessage: null,
+      chatId: group._id,
+      lastMessage: group.lastMessage,
       axiosInstance,
       setChats,
     });
