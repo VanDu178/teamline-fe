@@ -1,0 +1,394 @@
+.rs-right-sidebar {
+  width: 100%;
+  background-color: var(--background);
+  color: var(--text-primary);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-height: 100vh;
+  border-left: 1px solid var(--input-background);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.rs-group-header {
+  margin-bottom: 1.5rem;
+}
+
+.rs-sidebar-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.rs-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.rs-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+  object-fit: cover;
+}
+
+.rs-user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rs-user-name {
+  font-weight: bold;
+  font-size: 0.875rem;
+}
+
+.rs-sidebar-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.rs-action-btn {
+  padding: 0.5rem;
+  background-color: var(--button-background);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.rs-action-btn:hover {
+  background-color: var(--button-hover);
+}
+
+.rs-group-reminders {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.rs-section {
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  border-top: 1px solid var(--input-background);
+}
+
+.rs-section-icon {
+  margin-right: 0.5rem;
+}
+
+.rs-group-media {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.rs-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  border-top: 1px solid var(--input-background);
+}
+
+.rs-section-title {
+  font-weight: bold;
+}
+
+.rs-toggle-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+.rs-media-section {
+  padding: 0;
+}
+
+.rs-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.rs-media-item {
+  width: 100%;
+  height: 100px;
+  background-color: #ccc;
+  border-radius: 0.25rem;
+}
+
+.rs-view-all {
+  text-align: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.rs-group-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.rs-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rs-file-item {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.rs-file-item span {
+  float: right;
+}
+
+.rs-group-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.rs-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rs-link-item {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.rs-link-item span {
+  float: right;
+}
+
+.rs-group-security {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.rs-security-settings {
+  padding: 0;
+}
+
+.rs-security-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rs-security-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.rs-option-icon {
+  margin-right: 0.25rem;
+}
+
+.rs-option-subtext {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.rs-switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+
+.rs-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.rs-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 20px;
+}
+
+.rs-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+.rs-switch input:checked + .rs-slider {
+  background-color: #2196F3;
+}
+
+.rs-switch input:checked + .rs-slider:before {
+  transform: translateX(14px);
+}
+
+.rs-group-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.rs-security-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.rs-action-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rs-security-warning {
+  color: #ff0000;
+  font-size: 0.875rem;
+}
+
+.rs-security-action {
+  color: #ff0000;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.rs-sidebar-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--input-background);
+  text-align: center;
+}
+
+.rs-sidebar-footer span {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .rs-right-sidebar {
+    width: 100%;
+    min-height: auto;
+    border-left: none;
+    border-top: 1px solid var(--input-background);
+  }
+  .rs-user-avatar {
+    width: 30px;
+    height: 30px;
+  }
+  .rs-user-name {
+    font-size: 0.75rem;
+  }
+  .rs-action-btn {
+    font-size: 0.75rem;
+    width: 30px;
+    height: 30px;
+    padding: 0.25rem;
+  }
+  .rs-sidebar-title {
+    font-size: 1rem;
+  }
+  .rs-media-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .rs-media-item {
+    height: 80px;
+  }
+  .rs-link-item {
+    font-size: 0.7rem;
+  }
+  .rs-file-item {
+    font-size: 0.7rem;
+  }
+  .rs-security-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .rs-action-column {
+    align-items: flex-start;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .rs-right-sidebar {
+    width: 200px;
+  }
+  .rs-user-avatar {
+    width: 35px;
+    height: 35px;
+  }
+  .rs-action-btn {
+    font-size: 0.8125rem;
+    width: 35px;
+    height: 35px;
+  }
+  .rs-sidebar-title {
+    font-size: 1.125rem;
+  }
+  .rs-media-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .rs-media-item {
+    height: 90px;
+  }
+  .rs-link-item {
+    font-size: 0.75rem;
+  }
+  .rs-file-item {
+    font-size: 0.75rem;
+  }
+  .rs-security-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .rs-action-column {
+    align-items: flex-start;
+  }
+}

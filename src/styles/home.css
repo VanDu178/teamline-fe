@@ -1,5 +1,5 @@
 .main {
-  width: 780px;
+  width:100%;
   background-color: var(--background-tertiary);
   color: var(--text-primary);
   padding: 1.5rem;

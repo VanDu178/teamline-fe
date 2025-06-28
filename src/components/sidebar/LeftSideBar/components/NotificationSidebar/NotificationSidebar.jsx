@@ -1,5 +1,4 @@
 import NotificationItem from "../NotificationItem/NotificationItem";
-// import "./NotificationSidebar.css"
 
 const NotificationSidebar = ({ notifications, cursor, isLoading, loadMoreRef, handleDeleteNotification }) => {
     return (

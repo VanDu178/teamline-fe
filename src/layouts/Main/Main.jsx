@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import LeftSidebar from "../../components/sidebar/LeftSideBar/index";
 import ChatList from "../../components/chat/ChatList/ChatList";
-import RightSideBar from "../../components/sidebar/RightSideBar/RightSideBar";
 import ChatBox from "../../components/chatbox/ChatBox";
 import { useAuth } from "../../contexts/AuthContext";
 import { useChat } from "../../contexts/ChatContext";
@@ -11,6 +10,7 @@ import { connectSocket, disconnectSocket, registerSocketEvents, setChatStore } f
 import { emitSocketEvent } from '../../configs/socketEmitter';
 import { isLocalChatId } from '../../utils/chatIdUtils';
 
+import 'bootstrap/dist/css/bootstrap.min.css';
 import "./Main.css";
 
 export let joinRoomFunction = null;
@@ -56,11 +56,18 @@ const Main = () => {
     }, [roomId]);
 
     return (
-        <div className="flex-container">
-            <LeftSidebar />
-            <ChatList />
-            {showChat ? <ChatBox /> : <Outlet />}
-            <RightSideBar />
+        <div className="container-fluid">
+            <div className="row d-flex">
+                <div className="bg-light p-0" style={{ width: '6%' }}>
+                    <LeftSidebar />
+                </div>
+                <div className="bg-white p-0" style={{ width: '24%' }}>
+                    <ChatList />
+                </div>
+                <div className="bg-secondary p-0" style={{ width: '70%' }}>
+                    {showChat ? <ChatBox /> : <Outlet />}
+                </div>
+            </div>
         </div>
     );
 };

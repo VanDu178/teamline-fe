@@ -8,16 +8,13 @@ import Swal from "sweetalert2";
 
 const useNotificationHandler = () => {
   const { user } = useAuth();
-  const {
-    setNotifications,
-    notificationsToMarkReadRef,
-    notificationsToDismissRef,
-  } = useNotification();
+  const { notificationsToMarkReadRef } = useNotification();
 
   const { handleDeleteNotification } = useNotificationBoxHandler();
 
   //Các hàm xử lý hành động cho loại notification "Gửi lời mời vào nhóm chat"
   const acceptGroupInvite = async (groupId, notifId) => {
+    notificationsToMarkReadRef.current.add(notifId);
     const data = {
       notifId,
       groupId,

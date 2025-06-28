@@ -1,5 +1,5 @@
 .leftsidebar {
-  width: 60px;
+  width: 100%;
   background-color: var(--background-secondary);
   color: var(--text-primary);
   padding: 3rem;
@@ -85,22 +85,22 @@
 }
 
 .badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background-color: red;
-  color: white;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 50%;
-  font-weight: bold;
+  position: absolute ;
+  top: -5px ;
+  right: -5px ;
+  background-color: red ;
+  color: white ;
+  font-size: 12px ;
+  padding: 2px 6px !important;
+  border-radius: 50% !important;
+  font-weight: bold ;
 }
 
 .notif-sidebar {
   position: absolute;
   top: 0;
-  right: -300px; 
-  width: 300px;
+  right: -364px; 
+  width: 364px;
   border-left: 1px solid var(--border-color);
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
   transition: right 0.3s ease;
