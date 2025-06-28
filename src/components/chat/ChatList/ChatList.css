@@ -1,5 +1,5 @@
 .chatlist {
-  width: 300px;
+  width: 100%;
   background: var(--background);
   color: var(--text-primary);
   padding: 1rem;
@@ -208,7 +208,7 @@
 }
 
 /* Responsive */
-@media (max-width: 767px) {
+/* @media (max-width: 767px) {
   .chatlist {
     width: 100%;
     padding: 1rem 0.75rem;
@@ -231,7 +231,7 @@
   }
 
   .create-group-icon {
-    width: 2rem; /* Tương đương 32px */
+    width: 2rem; 
     height: 2rem;
     font-size: 1rem;
   }
@@ -252,8 +252,8 @@
   }
 
   .create-group-icon {
-    width: 2.25rem; /* Tương đương 36px */
+    width: 2.25rem; 
     height: 2.25rem;
     font-size: 1.1rem;
   }
-}
+} */

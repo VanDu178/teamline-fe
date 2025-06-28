@@ -1,10 +1,10 @@
 .chat-item {
+  width:100%;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--input-background);
   border-radius: 2px;
   display: flex;
   align-items: center;
-  min-width: 0; 
   transition: border-color 0.3s ease;
   cursor: pointer;
 }

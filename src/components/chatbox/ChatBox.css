@@ -2,7 +2,6 @@
 
 .chat-container {
   width: 100%;
-  max-width: 800px;
   max-height: 100vh;
   min-height: 100vh;
   display: flex;
@@ -10,7 +9,6 @@
   background-color: var(--background-tertiary);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
   overflow: hidden;
   box-sizing: border-box;
 }

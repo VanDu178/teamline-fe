@@ -10,7 +10,7 @@
 }
 
 
-@media (max-width: 767px) {
+/* @media (max-width: 767px) {
   .flex-container {
     flex-direction: column;
     height: auto;
@@ -31,10 +31,10 @@
     width: 100%;
     height: auto;
   }
-}
+} */
 
 
-@media (min-width: 1025px) {
+/* @media (min-width: 1025px) {
   .flex-container {
     flex-direction: row;
   }
@@ -50,4 +50,4 @@
   .right-sidebar {
     width: 236px;
   }
-}
+} */

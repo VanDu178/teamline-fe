@@ -3,11 +3,15 @@ import { setChatStore } from '../../utils/socket';
 import { emitSocketEvent } from '../../configs/socketEmitter';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from "../../contexts/AuthContext";
-import './ChatBox.css';
 import axiosInstance from '../../configs/axiosInstance';
 import ClipLoader from "react-spinners/ClipLoader";
 import { isLocalChatId } from '../../utils/chatIdUtils';
 import { formatMessageDate } from '../../utils/dateUtils';
+import RightSideBar from "../sidebar/RightSideBar/index/index"
+
+
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './ChatBox.css';
 
 const ChatBox = () => {
     const { messages, setMessages, roomId, roomIdRef, toUserId, setToUserId } = useChat();
@@ -418,130 +422,142 @@ const ChatBox = () => {
     };
 
     return (
-        <>
-            <div className="chat-container">
-                <div className="chat-header">
-                    <div className="header-left">
-                        <div className="avatar">
-                            <img src="#" alt="avatar" />
-                        </div>
-                        <div className="header-info">
-                            <h3>Chat-app-team</h3>
-                            <p>2 thành viên đang hoạt động</p>
-                        </div>
-                    </div>
-                    <div className="header-actions">
-                        <button className="header-btn">
-                            <i className="fas fa-search"></i>
-                        </button>
-                        <button className="header-btn">
-                            <i className="fas fa-ellipsis-v"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div className={`chat-messages ${contextMenu.visible ? 'no-scroll' : ''}`} ref={chatMessagesRef}>
-                    {loading && (
-                        <div style={{ textAlign: 'center', margin: '10px 0' }}>
-                            <ClipLoader color="#36d7b7" size={20} />
-                        </div>
-                    )}
-                    {renderMessages()}
-                    <div ref={messagesEndRef} />
-                </div>
-
-                {replyMessage && (
-                    <div className="reply-preview-container">
-                        <div className="reply-preview-content">
-                            <div className="reply-preview-header">
-                                <span>Trả lời {replyMessage.sender._id === userId ? "bạn" : replyMessage.sender.name}</span>
-                                <button className="cancel-reply-btn" onClick={cancelReply}>
-                                    <i className="fas fa-times"></i>
+        <div className="container-fluid">
+            <div className="row">
+                {/* ChatBox chiếm 9/12 = 75% */}
+                <div className="col-12 col-md-8 p-0">
+                    <div className="chat-container">
+                        <div className="chat-header">
+                            <div className="header-left">
+                                <div className="avatar">
+                                    <img src="#" alt="avatar" />
+                                </div>
+                                <div className="header-info">
+                                    <h3>Chat-app-team</h3>
+                                    <p>2 thành viên đang hoạt động</p>
+                                </div>
+                            </div>
+                            <div className="header-actions">
+                                <button className="header-btn">
+                                    <i className="fas fa-search"></i>
+                                </button>
+                                <button className="header-btn">
+                                    <i className="fas fa-ellipsis-v"></i>
                                 </button>
                             </div>
-                            <div className="reply-preview-text">
-                                {replyMessage.content.length > 50
-                                    ? `${replyMessage.content.substring(0, 50)}...`
-                                    : replyMessage.content}
+                        </div>
+
+                        <div className={`chat-messages ${contextMenu.visible ? 'no-scroll' : ''}`} ref={chatMessagesRef}>
+                            {loading && (
+                                <div style={{ textAlign: 'center', margin: '10px 0' }}>
+                                    <ClipLoader color="#36d7b7" size={20} />
+                                </div>
+                            )}
+                            {renderMessages()}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {replyMessage && (
+                            <div className="reply-preview-container">
+                                <div className="reply-preview-content">
+                                    <div className="reply-preview-header">
+                                        <span>Trả lời {replyMessage.sender._id === userId ? "bạn" : replyMessage.sender.name}</span>
+                                        <button className="cancel-reply-btn" onClick={cancelReply}>
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div className="reply-preview-text">
+                                        {replyMessage.content.length > 50
+                                            ? `${replyMessage.content.substring(0, 50)}...`
+                                            : replyMessage.content}
+                                    </div>
+                                </div>
                             </div>
+                        )}
+
+                        <div className="chat-input-container">
+                            <div className="input-tools">
+                                <button className="tool-btn">
+                                    <i className="fas fa-plus-circle"></i>
+                                </button>
+                                <button className="tool-btn">
+                                    <i className="far fa-smile"></i>
+                                </button>
+                                <button className="tool-btn">
+                                    <i className="fas fa-paperclip"></i>
+                                </button>
+                            </div>
+                            <div className="input-message-wrapper">
+                                <textarea
+                                    ref={textareaRef}
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    onKeyDown={handleKeyPress}
+                                    placeholder="Nhập tin nhắn..."
+                                    className="input-message"
+                                    rows={textAreaRows}
+                                />
+                            </div>
+                            <button
+                                onClick={handleSendMessage}
+                                className="send-button"
+                                disabled={!message}
+                            >
+                                <i className="fas fa-paper-plane"></i>
+                            </button>
                         </div>
                     </div>
-                )}
 
-                <div className="chat-input-container">
-                    <div className="input-tools">
-                        <button className="tool-btn">
-                            <i className="fas fa-plus-circle"></i>
-                        </button>
-                        <button className="tool-btn">
-                            <i className="far fa-smile"></i>
-                        </button>
-                        <button className="tool-btn">
-                            <i className="fas fa-paperclip"></i>
-                        </button>
-                    </div>
-                    <div className="input-message-wrapper">
-                        <textarea
-                            ref={textareaRef}
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            onKeyDown={handleKeyPress}
-                            placeholder="Nhập tin nhắn..."
-                            className="input-message"
-                            rows={textAreaRows}
-                        />
-                    </div>
-                    <button
-                        onClick={handleSendMessage}
-                        className="send-button"
-                        disabled={!message}
-                    >
-                        <i className="fas fa-paper-plane"></i>
-                    </button>
+                    {contextMenu.visible && (
+                        <div
+                            className="context-menu"
+                            style={{
+                                left: `${contextMenu.position.x}px`,
+                                top: `${contextMenu.position.y}px`
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="context-menu-item" onClick={() => handleMenuAction('reply', contextMenu.message)}>
+                                <i className="fas fa-reply"></i>
+                                <span>Trả lời</span>
+                            </div>
+                            <div className="context-menu-item" onClick={() => handleMenuAction('forward', contextMenu.message)}>
+                                <i className="fas fa-share"></i>
+                                <span>Chuyển tiếp</span>
+                            </div>
+                            <div className="context-menu-item" onClick={() => handleMenuAction('copy', contextMenu.message)}>
+                                <i className="fas fa-copy"></i>
+                                <span>Sao chép</span>
+                            </div>
+                            <div className="context-menu-item" onClick={() => handleMenuAction('pin', contextMenu.message)}>
+                                <i className="fas fa-thumbtack"></i>
+                                <span>Ghim tin nhắn</span>
+                            </div>
+                            <div className="context-menu-item" onClick={() => handleMenuAction('mark', contextMenu.message)}>
+                                <i className="fas fa-bookmark"></i>
+                                <span>Đánh dấu tin nhắn</span>
+                            </div>
+                            <div className="context-menu-divider"></div>
+                            <div className="context-menu-item" onClick={() => handleMenuAction('delete', contextMenu.message)}>
+                                <i className="fas fa-trash-alt"></i>
+                                <span>Xóa chỉ ở phía tôi</span>
+                            </div>
+                            <div className="context-menu-item" onClick={() => handleMenuAction('recall', contextMenu.message)}>
+                                <i className="fas fa-ban"></i>
+                                <span>Thu hồi tin nhắn</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* RightSidebar chiếm 3/12 = 25% */}
+                <div className="col-12 col-md-4 p-0">
+                    <RightSideBar />
                 </div>
             </div>
-            {contextMenu.visible && (
-                <div
-                    className="context-menu"
-                    style={{
-                        left: `${contextMenu.position.x}px`,
-                        top: `${contextMenu.position.y}px`
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="context-menu-item" onClick={() => handleMenuAction('reply', contextMenu.message)}>
-                        <i className="fas fa-reply"></i>
-                        <span>Trả lời</span>
-                    </div>
-                    <div className="context-menu-item" onClick={() => handleMenuAction('forward', contextMenu.message)}>
-                        <i className="fas fa-share"></i>
-                        <span>Chuyển tiếp</span>
-                    </div>
-                    <div className="context-menu-item" onClick={() => handleMenuAction('copy', contextMenu.message)}>
-                        <i className="fas fa-copy"></i>
-                        <span>Sao chép</span>
-                    </div>
-                    <div className="context-menu-item" onClick={() => handleMenuAction('pin', contextMenu.message)}>
-                        <i className="fas fa-thumbtack"></i>
-                        <span>Ghim tin nhắn</span>
-                    </div>
-                    <div className="context-menu-item" onClick={() => handleMenuAction('mark', contextMenu.message)}>
-                        <i className="fas fa-bookmark"></i>
-                        <span>Đánh dấu tin nhắn</span>
-                    </div>
-                    <div className="context-menu-divider"></div>
-                    <div className="context-menu-item" onClick={() => handleMenuAction('delete', contextMenu.message)}>
-                        <i className="fas fa-trash-alt"></i>
-                        <span>Xóa chỉ ở phía tôi</span>
-                    </div>
-                    <div className="context-menu-item" onClick={() => handleMenuAction('recall', contextMenu.message)}>
-                        <i className="fas fa-ban"></i>
-                        <span>Thu hồi tin nhắn</span>
-                    </div>
-                </div>
-            )}
-        </>
+        </div>
     );
+
 };
 
 export default ChatBox;
