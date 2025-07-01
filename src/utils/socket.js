@@ -142,13 +142,11 @@ export const registerSocketEvents = (socket) => {
     }
 
     if (localChatId === roomIdRef?.current) {
-      console.log("chay tk này");
       setRoomId(chatId);
       return;
     }
 
     if (status === "saved") {
-      console.log("2");
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
           msg.localId === localId

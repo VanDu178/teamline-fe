@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { HiArrowTurnUpLeft, HiMiniUserGroup } from "react-icons/hi2";
+import { MdGroupAdd } from "react-icons/md";
+import { HiMiniUserGroup } from "react-icons/hi2";
 import ChatItem from "../ChatItem/ChatItem";
 import UserItem from "../UserItem/UserItem"
 import { useAuth } from "../../../contexts/AuthContext";
@@ -178,8 +179,8 @@ const ChatList = () => {
                 </div>
                 {!isInputFocused &&
                     <span className="create-group-icon" onClick={() => { setIsCreateGroupModalOpen(true); }}>
-                        +
-                        <HiMiniUserGroup />
+
+                        <MdGroupAdd />
                     </span>}
             </div>
 

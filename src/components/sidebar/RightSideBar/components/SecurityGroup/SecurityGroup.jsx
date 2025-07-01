@@ -15,11 +15,11 @@ const SecurityGroup = () => {
                 <div className="rs-section rs-security-settings">
                     <div className="rs-security-options">
                         <div className="rs-security-option">
-                            <span className="rs-option-icon">⏳</span> Tin nhắn tự xóa ?
+                            <span className="rs-option-icon">⏳ Tin nhắn tự xóa ?</span>
                             <span className="rs-option-subtext">Không bao giờ</span>
                         </div>
                         <div className="rs-security-option">
-                            <span className="rs-option-icon">👁️</span> Ẩn trò chuyện
+                            <span className="rs-option-icon">👁️ Ẩn trò chuyện</span>
                             <label className="rs-switch">
                                 <input type="checkbox" />
                                 <span className="rs-slider"></span>
