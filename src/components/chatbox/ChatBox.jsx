@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { setChatStore } from '../../utils/socket';
 import { emitSocketEvent } from '../../configs/socketEmitter';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from "../../contexts/AuthContext";
@@ -7,7 +6,10 @@ import axiosInstance from '../../configs/axiosInstance';
 import ClipLoader from "react-spinners/ClipLoader";
 import { isLocalChatId } from '../../utils/chatIdUtils';
 import { formatMessageDate } from '../../utils/dateUtils';
-import RightSideBar from "../sidebar/RightSideBar/index/index"
+import RightSideBar from "../sidebar/RightSideBar/index/index";
+import MessageItemFile from "./components/MessageItemFile/MessageItemFile";
+import { uploadInChunks } from "../../utils/upload";
+import { toast } from 'react-toastify';
 
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -29,6 +31,7 @@ const ChatBox = () => {
     const scrollHeightBeforeRef = useRef(0);
     const chatMessagesRef = useRef(null);
     const textareaRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const [contextMenu, setContextMenu] = useState({
         visible: false,
@@ -66,7 +69,6 @@ const ChatBox = () => {
             }
 
             const res = await axiosInstance.get(`/messages/${roomIdRef?.current}/${page}`);
-            console.log(res);
             if (res.status === 200) {
                 if (isLoadMore) {
                     setMessages((prevMessages) => [...res.data.messages, ...prevMessages]);
@@ -147,15 +149,20 @@ const ChatBox = () => {
         }
     };
 
-    const handleSendMessage = () => {
+    const handleSendMessage = (messageType = "text", fileUrl = null, fileName = null, mimeType = null) => {
         const localId = Date.now() + Math.random(); // ID tạm thời duy nhất
-        if (message && roomId) {
+        console.log(fileUrl, "", fileName, "", mimeType);
+        if ((message || (fileUrl && fileName && mimeType)) && roomId) {
             emitSocketEvent('send-message', {
                 roomId,
-                message,
+                message: message || null,
                 toUserId,
                 localId,
-                replyTo: replyMessage?._id || null
+                replyTo: replyMessage?._id || null,
+                fileUrl,
+                fileName,
+                mimeType,
+                messageType,
             });
             setMessages((prev) => [
                 ...prev,
@@ -165,9 +172,11 @@ const ChatBox = () => {
                     sender: {
                         _id: userId,
                     },
-                    content: message,
-                    type: "text",
-                    fileUrl: null,
+                    content: message || null,
+                    type: messageType,
+                    fileUrl: fileUrl,
+                    fileName: fileName,
+                    mimeType: mimeType,
                     replyTo: replyMessage ? {
                         _id: replyMessage._id,
                         content: replyMessage.content,
@@ -365,19 +374,36 @@ const ChatBox = () => {
                         </div>
                         <div className="message-content">
                             {
-                                msg?.chat?.type != 'private' && msg?.sender?._id != userId &&
+                                msg?.chat?.type !== 'private' && msg?.sender?._id !== userId &&
                                 (
                                     <div className='message-name'>{msg?.sender.name}</div>
                                 )
                             }
-                            <div className="message-text">
-                                {msg?.content?.split('\n')?.map((line, index) => (
-                                    <React.Fragment key={index}>
-                                        {line}
-                                        <br />
-                                    </React.Fragment>
-                                ))}
-                            </div>
+                            {msg?.type === "text" ?
+                                (<div className="message-text">
+                                    {msg?.content?.split('\n')?.map((line, index) => (
+                                        <React.Fragment key={index}>
+                                            {line}
+                                            <br />
+                                        </React.Fragment>
+                                    ))}
+                                </div>) : (
+                                    <div className="file-content">
+                                        <div className="file-icon">
+                                            <i className={getFileIcon(msg.mimeType)}></i>
+                                        </div>
+                                        <div className="file-details">
+                                            <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="file-name">
+                                                {msg.fileName || 'Unknown File'}
+                                            </a>
+                                            <span className="file-size">{'46.18 KB'}</span>
+                                        </div>
+                                        <a href={msg.fileUrl} download className="download-btn">
+                                            <i className="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                )
+                            }
                             <div className="message-time">
                                 {msg.hasOwnProperty('updatedAt') ? (
                                     msg.updatedAt ? (
@@ -404,22 +430,127 @@ const ChatBox = () => {
                                 }}
                             >
                             </i>
-                        </button>
+                        </button >
 
                         {/* Nút reaction (chỉ hiện khi có reaction) */}
-                        {msg.reactions && msg.reactions.length > 0 && (
-                            <button className="reaction-badge">
-                                <i className="fas fa-heart"></i>
-                                <span className="reaction-count">{msg.reactions.length}</span>
-                            </button>
-                        )}
+                        {
+                            msg.reactions && msg.reactions.length > 0 && (
+                                <button className="reaction-badge">
+                                    <i className="fas fa-heart"></i>
+                                    <span className="reaction-count">{msg.reactions.length}</span>
+                                </button>
+                            )
+                        }
 
                         {/* khi người reaction là chính mình thì hiển thị nút xóa reaction */}
-                    </div>
+                    </div >
                 ))}
-            </React.Fragment>
+            </React.Fragment >
         ));
     };
+
+
+    //Xử lý các sự kiện gửi file, video
+    const triggerFileDialog = () => {
+        fileInputRef.current.click();
+    };
+
+    const handleFileSelection = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Cấu hình giới hạn
+        const MAX_FILE_SIZE_MB = 1024; //Giới hạn dung lượng
+        const ALLOWED_MIME_PREFIXES = ['image/', 'video/', 'application/pdf', 'text/plain']; //Giới hạn loại file
+        const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'jfif']; //Giới hạn loại đuôi ảnh 
+        const MAX_FILENAME_LENGTH = 100; //Giới hạn số lượng kí tự của tên file
+
+        try {
+            const mimeType = file.type;
+            const fileName = file.name;
+            const extension = fileName.split('.').pop().toLowerCase();
+
+            // 1. Kiểm tra dung lượng file
+            if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+                toast.error(`File vượt quá dung lượng cho phép (${MAX_FILE_SIZE_MB}MB).`);
+                return;
+            }
+
+            // 2. Kiểm tra loại MIME được hỗ trợ
+            const isValidMime = ALLOWED_MIME_PREFIXES.some(prefix => mimeType.startsWith(prefix));
+            if (!isValidMime) {
+                toast.error('Loại file không được hỗ trợ.');
+                return;
+            }
+
+            // 3. Kiểm tra độ dài tên file
+            if (fileName.length > MAX_FILENAME_LENGTH) {
+                toast.error('Tên file quá dài.');
+                return;
+            }
+
+            // 4. Kiểm tra phần mở rộng tương ứng MIME (ví dụ ảnh nhưng phần mở rộng sai)
+            if (mimeType.startsWith('image/') && !IMAGE_EXTENSIONS.includes(extension)) {
+                toast.error(`File hình ảnh không hợp lệ. Chỉ chấp nhận các định dạng: ${IMAGE_EXTENSIONS.join(', ')}`);
+                return;
+            }
+
+            // 5. Xác định loại message
+            let messageType = 'file'; // default
+            if (mimeType.startsWith('image/')) {
+                messageType = 'image';
+            } else if (mimeType.startsWith('video/')) {
+                messageType = 'video';
+            }
+
+            // 6. Gửi tin nhắn
+            const response = await uploadInChunks(file);
+            const fileUrl = response?.data?.fileUrl;
+            console.log("ád", fileUrl, "", fileName, "", mimeType);
+            await handleSendMessage(
+                messageType,
+                fileUrl,
+                fileName,
+                mimeType,
+            );
+
+        } catch (error) {
+            //Mọi lỗi xảy ra sẽ xử lý thông báo đã có lỗi xảy ra trong quá trình upload
+            //Sẽ có loại lỗi người dùng được retry nhưng xử lý sau. 
+            console.log("lỗi khi tải file", error);
+            toast('Đã xảy ra lỗi khi tải lên file.');
+        } finally {
+            // Reset input để có thể chọn lại cùng một file
+            event.target.value = null;
+        }
+    };
+
+    const getFileIcon = (mimeType) => {
+        if (!mimeType) return "far fa-file";
+
+        if (mimeType.startsWith("image/")) return "far fa-file-image";
+        if (mimeType.startsWith("video/")) return "far fa-file-video";
+        if (mimeType.startsWith("audio/")) return "far fa-file-audio";
+        if (mimeType === "application/pdf") return "far fa-file-pdf";
+        if (
+            mimeType === "application/msword" ||
+            mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ) return "far fa-file-word";
+        if (
+            mimeType === "application/vnd.ms-excel" ||
+            mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ) return "far fa-file-excel";
+        if (
+            mimeType === "application/vnd.ms-powerpoint" ||
+            mimeType === "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        ) return "far fa-file-powerpoint";
+        if (mimeType === "application/zip" || mimeType === "application/x-rar-compressed") return "far fa-file-archive";
+
+        return "far fa-file"; // fallback
+    };
+
+
+
 
     return (
         <div className="container-fluid">
@@ -483,7 +614,8 @@ const ChatBox = () => {
                                 <button className="tool-btn">
                                     <i className="far fa-smile"></i>
                                 </button>
-                                <button className="tool-btn">
+                                <button className="tool-btn" onClick={triggerFileDialog}>
+                                    <input type="file" style={{ display: 'none' }} ref={fileInputRef} onChange={handleFileSelection} />
                                     <i className="fas fa-paperclip"></i>
                                 </button>
                             </div>

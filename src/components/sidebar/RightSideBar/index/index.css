@@ -11,6 +11,7 @@
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   box-sizing: border-box;
   overflow-y: auto;
+  position: relative;
 }
 
 .rs-group-header {
@@ -58,10 +59,10 @@
 
 .rs-action-btn {
   padding: 0.5rem;
-  background-color: var(--button-background);
+  background-color: rgb(230,231,235);
   color: #ffffff;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 0.875rem;
   width: 40px;
@@ -72,8 +73,14 @@
   transition: background-color 0.2s;
 }
 
+.rs-action-btn-icon{
+     font-size: 22px;
+     color:#000;
+}
+
+
 .rs-action-btn:hover {
-  background-color: var(--button-hover);
+  background-color: rgb(175,181,193);
 }
 
 .rs-group-reminders {
@@ -309,6 +316,36 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
   cursor: pointer;
+}
+
+/* Dropdown Styles */
+.rs-dropdown {
+  position: fixed;
+  width: inherit;
+  height: 100vh;
+  top: 0;
+  background-color: var(--background);
+  padding: 1rem;
+  color: var(--text-primary);
+  border-left: 1px solid var(--input-background);
+  overflow-y: auto;
+  animation: slideDown 0.3s ease-out;
+  z-index: 1000;
+}
+
+.rs-dropdown-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 /* Responsive adjustments */

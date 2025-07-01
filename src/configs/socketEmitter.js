@@ -23,7 +23,6 @@ export const emitSocketEvent = (event, data) => {
 
     currentSocket.emit(event, data, async (response) => {
       if (response === "token-expired") {
-        console.log("dulieu", response);
         const refreshedResponse = await handleTokenExpired();
         resolve(refreshedResponse);
       } else {
@@ -85,7 +84,7 @@ export const emitSocketEvent = (event, data) => {
 //             responseCallback = response;
 //           });
 //           //nếu sự kiện bị chặn do token hết hạn trước đó là join room thì không cần join nữa
-//           if (pendingEvent.event != "join-room") {
+//           if (pendingEvent.event !== "join-room") {
 //             joinRoomFunction();
 //           }
 //           pendingEvent = null;
