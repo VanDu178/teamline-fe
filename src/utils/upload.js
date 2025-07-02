@@ -27,7 +27,7 @@ const uploadChunkWithRetry = async (url, formData, retries = MAX_RETRIES) => {
   }
 };
 
-export const uploadInChunks = async (file) => {
+export const uploadInChunks = async (file, onProgress) => {
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
   const fileId = `${file.name}-${file.size}-${Date.now()}`;
   // Check for missing fileId or chunkIndex error from server (400)
@@ -47,6 +47,11 @@ export const uploadInChunks = async (file) => {
     const uploadUrl = `/file/upload/chunk?fileId=${fileId}&chunkIndex=${i}`;
     try {
       await uploadChunkWithRetry(uploadUrl, formData);
+      // Gọi callback sau mỗi chunk
+      const percent = Math.round(((i + 1) / totalChunks) * 100);
+      if (onProgress) {
+        onProgress(percent);
+      }
     } catch (error) {
       throw new Error(
         `Lỗi khi upload chunk ${i}: ${

@@ -7,10 +7,10 @@ import ClipLoader from "react-spinners/ClipLoader";
 import { isLocalChatId } from '../../utils/chatIdUtils';
 import { formatMessageDate } from '../../utils/dateUtils';
 import RightSideBar from "../sidebar/RightSideBar/index/index";
-import MessageItemFile from "./components/MessageItemFile/MessageItemFile";
 import { uploadInChunks } from "../../utils/upload";
 import { toast } from 'react-toastify';
 import { useWarning } from "../../hooks/useWarning";
+
 
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -32,11 +32,16 @@ const ChatBox = () => {
     const scrollHeightBeforeRef = useRef(0);
     const chatMessagesRef = useRef(null);
     const textareaRef = useRef(null);
+
     const fileInputRef = useRef(null);
     const [uploadInProgress, setUploadInProgress] = useState(false);
+    const [uploadProgressMap, setUploadProgressMap] = useState({}); //dùng để theo dõi tiến trình upload
+
 
     //Cảnh báo người dùng nếu họ reload trang hoặc chuyển tap nhưng có tiến trình upload đang chạy
-    useWarning(uploadInProgress, "Bạn đang thực hiện gửi file, nếu thoát có thể gây hủy tiến trình");
+    useWarning(uploadInProgress, "Bạn đang thực hiện gửi file, nếu thoát có thể gây hủy tiến trình", () => {
+        alert(" request xuong backend de thuc hien xoa noi dung trong upload");
+    });
 
     const [contextMenu, setContextMenu] = useState({
         visible: false,
@@ -402,9 +407,34 @@ const ChatBox = () => {
                                             </a>
                                             <span className="file-size">{'46.18 KB'}</span>
                                         </div>
-                                        <a href={msg.fileUrl} download className="download-btn">
-                                            <i className="fas fa-download"></i>
-                                        </a>
+                                        {/* Tiến trình upload nếu chưa có fileUrl */}
+                                        {msg.fileUrl === null ? (
+                                            uploadProgressMap[msg.localId] < 100 ? (
+                                                // Đang upload chunk
+                                                <div className="upload-progress-bar">
+                                                    <div className="progress-track">
+                                                        <div
+                                                            className="progress-fill"
+                                                            style={{ width: `${uploadProgressMap[msg.localId]}%` }}
+                                                        />
+                                                    </div>
+                                                    <div className="progress-text">
+                                                        Đang tải lên: {uploadProgressMap[msg.localId]}%
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                // Đang merge và upload lên Google Drive
+                                                <div className="upload-status-processing">
+                                                    <span className="processing-text">Đang xử lý file...</span>
+                                                </div>
+                                            )
+                                        ) : (
+                                            // Hoàn tất
+                                            <a href={msg.fileUrl} download className="download-btn">
+                                                <i className="fas fa-download"></i>
+                                            </a>
+                                        )}
+
                                     </div>
                                 )
                             }
@@ -544,9 +574,16 @@ const ChatBox = () => {
 
 
                 // 6. Gửi tin nhắn
-                const response = await uploadInChunks(file);
+                const response = await uploadInChunks(file, (percent) => {
+                    setUploadProgressMap(prev => ({
+                        ...prev,
+                        [localId]: percent
+                    }));
+                });
+
                 const fileUrl = response?.data?.fileUrl;
 
+                console.log("emit sự kiện xuống backend");
                 emitSocketEvent('send-message', {
                     roomId,
                     message: message || null,
@@ -557,6 +594,11 @@ const ChatBox = () => {
                     fileName,
                     mimeType,
                     messageType,
+                });
+                // Cleanup upload progress sau khi emit
+                setUploadProgressMap(prev => {
+                    const { [localId]: _, ...rest } = prev;
+                    return rest;
                 });
             } else {
                 console.log('Vui lòng nhập tin nhắn và ID người nhận');

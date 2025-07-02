@@ -7,7 +7,7 @@ import { useEffect } from "react";
  * @param message - tùy chọn: thông báo tùy chỉnh
  */
 
-export function useWarning(shouldWarn, message) {
+export function useWarning(shouldWarn, message, callback) {
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!shouldWarn) return;
@@ -20,6 +20,9 @@ export function useWarning(shouldWarn, message) {
     };
 
     const handleUnload = () => {
+      if (callback) {
+        callback();
+      }
       //Xử lý khi người dùng thật sự reload trang hoặc chuyển tap
       console.log("Người dùng đã rời trang khi đang upload");
     };
