@@ -126,6 +126,7 @@ export const registerSocketEvents = (socket) => {
       messageContent,
       messageSender,
       localChatId,
+      fileUrl,
     } = data;
 
     if (!isSearchingRef.current) {
@@ -156,6 +157,7 @@ export const registerSocketEvents = (socket) => {
                 createdAt: sentAt,
                 updatedAt: sentAt,
                 _id: messageId,
+                fileUrl,
               }
             : msg
         )

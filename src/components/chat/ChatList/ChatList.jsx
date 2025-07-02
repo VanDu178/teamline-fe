@@ -253,7 +253,7 @@ const ChatList = () => {
 
                                 message={
                                     item?.lastMessage?.content ||
-                                    item?.lastMessage?.fileUrl ||
+                                    item?.lastMessage?.fileName ||
                                     "Nhóm mới được tạo"
                                 }
                                 sender={item?.lastMessage?.sender?._id}
