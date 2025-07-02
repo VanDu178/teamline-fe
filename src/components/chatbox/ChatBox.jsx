@@ -10,6 +10,7 @@ import RightSideBar from "../sidebar/RightSideBar/index/index";
 import MessageItemFile from "./components/MessageItemFile/MessageItemFile";
 import { uploadInChunks } from "../../utils/upload";
 import { toast } from 'react-toastify';
+import { useWarning } from "../../hooks/useWarning";
 
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -32,6 +33,10 @@ const ChatBox = () => {
     const chatMessagesRef = useRef(null);
     const textareaRef = useRef(null);
     const fileInputRef = useRef(null);
+    const [uploadInProgress, setUploadInProgress] = useState(false);
+
+    //Cảnh báo người dùng nếu họ reload trang hoặc chuyển tap nhưng có tiến trình upload đang chạy
+    useWarning(uploadInProgress, "Bạn đang thực hiện gửi file, nếu thoát có thể gây hủy tiến trình");
 
     const [contextMenu, setContextMenu] = useState({
         visible: false,
@@ -151,7 +156,6 @@ const ChatBox = () => {
 
     const handleSendMessage = (messageType = "text", fileUrl = null, fileName = null, mimeType = null) => {
         const localId = Date.now() + Math.random(); // ID tạm thời duy nhất
-        console.log(fileUrl, "", fileName, "", mimeType);
         if ((message || (fileUrl && fileName && mimeType)) && roomId) {
             emitSocketEvent('send-message', {
                 roomId,
@@ -503,17 +507,60 @@ const ChatBox = () => {
                 messageType = 'video';
             }
 
-            // 6. Gửi tin nhắn
-            const response = await uploadInChunks(file);
-            const fileUrl = response?.data?.fileUrl;
-            console.log("ád", fileUrl, "", fileName, "", mimeType);
-            await handleSendMessage(
-                messageType,
-                fileUrl,
-                fileName,
-                mimeType,
-            );
+            const localId = Date.now() + Math.random(); // ID tạm thời duy nhất
+            if (fileName && mimeType && roomId) {
+                setUploadInProgress(true);
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        messageId: null,
+                        localId, // Gắn ID tạm thời
+                        sender: {
+                            _id: userId,
+                        },
+                        content: message || null,
+                        type: messageType,
+                        fileUrl: null,
+                        fileName: fileName,
+                        mimeType: mimeType,
+                        replyTo: replyMessage ? {
+                            _id: replyMessage._id,
+                            content: replyMessage.content,
+                            sender: {
+                                _id: replyMessage.sender._id,
+                                name: replyMessage.sender.name
+                            }
+                        } : null,
+                        reactions: [],
+                        seenBy: [],
+                        chat: {
+                            _id: roomId,
+                            type: "private" // nếu là nhóm thì bạn gán "group"
+                        },
+                        createdAt: null,
+                        updatedAt: null
+                    },
+                ]);
 
+
+                // 6. Gửi tin nhắn
+                const response = await uploadInChunks(file);
+                const fileUrl = response?.data?.fileUrl;
+
+                emitSocketEvent('send-message', {
+                    roomId,
+                    message: message || null,
+                    toUserId,
+                    localId,
+                    replyTo: replyMessage?._id || null,
+                    fileUrl,
+                    fileName,
+                    mimeType,
+                    messageType,
+                });
+            } else {
+                console.log('Vui lòng nhập tin nhắn và ID người nhận');
+            }
         } catch (error) {
             //Mọi lỗi xảy ra sẽ xử lý thông báo đã có lỗi xảy ra trong quá trình upload
             //Sẽ có loại lỗi người dùng được retry nhưng xử lý sau. 
@@ -522,6 +569,7 @@ const ChatBox = () => {
         } finally {
             // Reset input để có thể chọn lại cùng một file
             event.target.value = null;
+            setUploadInProgress(false);
         }
     };
 
