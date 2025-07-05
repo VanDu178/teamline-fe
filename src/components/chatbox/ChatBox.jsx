@@ -34,14 +34,21 @@ const ChatBox = () => {
     const textareaRef = useRef(null);
 
     const fileInputRef = useRef(null);
-    const [uploadInProgress, setUploadInProgress] = useState(false);
-    const [uploadProgressMap, setUploadProgressMap] = useState({}); //dùng để theo dõi tiến trình upload
+    // const [uploadInProgress, setUploadInProgress] = useState(false); 
+    const [uploadProgressMap, setUploadProgressMap] = useState({}); // lưu % tiến trình từng file
+
 
 
     //Cảnh báo người dùng nếu họ reload trang hoặc chuyển tap nhưng có tiến trình upload đang chạy
-    useWarning(uploadInProgress, "Bạn đang thực hiện gửi file, nếu thoát có thể gây hủy tiến trình", () => {
-        alert(" request xuong backend de thuc hien xoa noi dung trong upload");
-    });
+    // useWarning(uploadInProgress, "Bạn đang thực hiện gửi file, nếu thoát có thể gây hủy tiến trình", () => {
+    //     //call xuống backend để xóa mọi tiến trình của chat này.
+    // });
+
+    useEffect(() => {
+        if (roomId && !isLocalChatId(roomId)) {
+            fetchMessages(1);
+        }
+    }, [roomId]);
 
     const [contextMenu, setContextMenu] = useState({
         visible: false,
@@ -96,11 +103,7 @@ const ChatBox = () => {
         }
     };
 
-    useEffect(() => {
-        if (roomId && !isLocalChatId(roomId)) {
-            fetchMessages(1);
-        }
-    }, [roomId]);
+
 
     useEffect(() => {
         const handleScroll = () => {
@@ -491,6 +494,7 @@ const ChatBox = () => {
 
     const handleFileSelection = async (event) => {
         const file = event.target.files[0];
+        let localId;
         if (!file) return;
 
         // Cấu hình giới hạn
@@ -537,9 +541,8 @@ const ChatBox = () => {
                 messageType = 'video';
             }
 
-            const localId = Date.now() + Math.random(); // ID tạm thời duy nhất
+            localId = Date.now() + Math.random(); // ID tạm thời duy nhất
             if (fileName && mimeType && roomId) {
-                setUploadInProgress(true);
                 setMessages((prev) => [
                     ...prev,
                     {
@@ -574,7 +577,7 @@ const ChatBox = () => {
 
 
                 // 6. Gửi tin nhắn
-                const response = await uploadInChunks(file, (percent) => {
+                const response = await uploadInChunks(userId, roomId, file, (percent) => {
                     setUploadProgressMap(prev => ({
                         ...prev,
                         [localId]: percent
@@ -582,8 +585,6 @@ const ChatBox = () => {
                 });
 
                 const fileUrl = response?.data?.fileUrl;
-
-                console.log("emit sự kiện xuống backend");
                 emitSocketEvent('send-message', {
                     roomId,
                     message: message || null,
@@ -601,17 +602,15 @@ const ChatBox = () => {
                     return rest;
                 });
             } else {
-                console.log('Vui lòng nhập tin nhắn và ID người nhận');
+                return;
             }
         } catch (error) {
-            //Mọi lỗi xảy ra sẽ xử lý thông báo đã có lỗi xảy ra trong quá trình upload
-            //Sẽ có loại lỗi người dùng được retry nhưng xử lý sau. 
-            console.log("lỗi khi tải file", error);
+            console.log("Đã có lỗi xảy ra", error);
             toast('Đã xảy ra lỗi khi tải lên file.');
+            //xử lý set trạng thái của message là lỗi và hiển thị lỗi
         } finally {
             // Reset input để có thể chọn lại cùng một file
             event.target.value = null;
-            setUploadInProgress(false);
         }
     };
 
